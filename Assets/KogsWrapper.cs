@@ -646,7 +646,7 @@ public class KogsWrapper : MonoBehaviour
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
-	void OnGUI()
+/*	void OnGUI()
 	{
 		
 		if (enterred) return;
@@ -695,5 +695,5 @@ public class KogsWrapper : MonoBehaviour
 
 		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
 		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
-	}
+	}*/
 }
