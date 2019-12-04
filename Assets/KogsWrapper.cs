@@ -28,11 +28,11 @@ namespace kogs
 		public string type;
 	}
 
-	[Serializable]
+	/*[Serializable]
 	public class _txid
 	{
 		public string txid;
-	};
+	};*/
 
 	[Serializable]
 	class TokenidsResult
@@ -268,47 +268,47 @@ namespace kogs
 		// rpc signature: 'kogskoglist [my]'
 		public static int kogskoglist(bool onlyMy, out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogskoglist", onlyMy, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogskoglist", onlyMy ? "my" : null, out tokenidsOut, out errorStr);
 		}
 
 		// rpc signature: 'kogsslammerlist [my]'
 		public static int kogsslammerlist(bool onlyMy, out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogsslammerlist", onlyMy, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogsslammerlist", onlyMy ? "my" : null, out tokenidsOut, out errorStr);
 		}
 
 		// rpc signature: 'kogscontainerlist [my]'
 		public static int kogscontainerlist(bool onlyMy, out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogscontainerlist", onlyMy, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogscontainerlist", onlyMy ? "my" : null, out tokenidsOut, out errorStr);
 		}
 
 		// rpc signature: 'kogspacklist [my]'
 		public static int kogspacklist(bool onlyMy, out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogspacklist", onlyMy, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogspacklist", onlyMy ? "my" : null, out tokenidsOut, out errorStr);
 		}
 
 		// rpc signature: 'kogsplayerlist'
 		public static int kogsplayerlist(out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogsplayerlist", false, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogsplayerlist", null, out tokenidsOut, out errorStr);
 		}
 
 		// rpc signature: 'kogsgameconfiglist'
 		public static int kogsgameconfiglist(out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogsgameconfiglist", false, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogsgameconfiglist", null, out tokenidsOut, out errorStr);
 		}
 
-		// rpc signature: 'kogsgamelist [my]'
-		public static int kogsgamelist(out string[] tokenidsOut, out string errorStr)
+		// rpc signature: 'kogsgamelist [playerid]'
+		public static int kogsgamelist(string playerid, out string[] tokenidsOut, out string errorStr)
 		{
-			return kogsobjectlist("kogsgamelist", false, out tokenidsOut, out errorStr);
+			return kogsobjectlist("kogsgamelist", playerid, out tokenidsOut, out errorStr);
 		}
 
 		// internal universal method to call kogsxxxlist rpcs
-		private static int kogsobjectlist(string method, bool onlyMy, out string[] tokenidsOut, out string errorStr)
+		private static int kogsobjectlist(string method, string paramext, out string[] tokenidsOut, out string errorStr)
 		{
 			Int64 jresultPtr;
 			errorStr = "";
@@ -316,9 +316,9 @@ namespace kogs
 			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
 
 			RpcRequest<string[]> request = new RpcRequest<string[]>(method);
-			if (onlyMy)
+			if (paramext != null)
 			{
-				request.@params = new string[] { "my" };
+				request.@params = new string[] { paramext };
 			}
 
 			string requestStr = JsonUtility.ToJson(request);
@@ -384,10 +384,43 @@ namespace kogs
 			return rc;
 		}
 
+		// rpc signature: 'kogsstartgame name desc params:{}'
+		// note: no param at this time
+		// returns txData to sign and broadcast
+		public static int kogscreateplayer(string name, string desc, out string txData, out string errorStr)
+		{
+			Int64 jresultPtr;
+			errorStr = "";
+			txData = "";
+			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
+
+			RpcRequest<string[]> request = new RpcRequest<string[]>("kogscreateplayer");
+			request.@params = new string[3];
+			request.@params[0] = name;
+			request.@params[1] = desc;
+			request.@params[2] = "{}";
+
+			string requestStr = JsonUtility.ToJson(request);
+
+			Debug.Log("rpc request=" + requestStr);
+
+			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
+			if (rc == 0)
+			{
+				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("jresult=" + jresult);
+				txData = jresult;
+
+			}
+			else
+				errorStr = sbErrorStr.ToString();
+			return rc;
+		}
+
 		// rpc signature: 'kogsburntoken tokenid ...'
 		// burns a token by sending to 'dead' addr
 		// used to burn packs to unseal them
-		// return tx to sign and broadcast
+		// returns txData to sign and broadcast
 		public static int kogsburntoken(string tokenid, out string txData, out string errorStr)
 		{
 			Int64 jresultPtr;
@@ -628,12 +661,16 @@ public class KogsWrapper : MonoBehaviour
 
 		rc = NSPV.Init(sChainName, out err);
 		Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
+		GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
 
 		rc = NSPV.Login(wifStr, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
 
 		rc = KogsRPC.kogskoglist(true, out ids, out err);
 		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
+
+		rc = KogsRPC.kogscreateplayer("myname", "mydesc", out txData, out err);
+		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 
 		string[] playerids = { "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" };
 		rc = KogsRPC.kogsstartgame("650dd21139e11798fd13869c66e92f6267432983ffb26d905474d09ae029c543", playerids, out txData, out err);
@@ -656,5 +693,7 @@ public class KogsWrapper : MonoBehaviour
 		rc = KogsRPC.kogsslamdata("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", 10, 15, out txData, out err);
 		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err);
 
+		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
+		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
 	}
 }
