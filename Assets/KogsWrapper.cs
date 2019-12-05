@@ -646,54 +646,54 @@ public class KogsWrapper : MonoBehaviour
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
-/*	void OnGUI()
-	{
-		
-		if (enterred) return;
-		enterred = true;
-
-		string[] ids;
-		int rc;
-		string err;
-		string sChainName = "DIMXY11";
-		string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";
-		string txData = "";
-
-		rc = NSPV.Init(sChainName, out err);
-		Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
-		GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
-
-		rc = NSPV.Login(wifStr, out err);
-		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
-
-		rc = KogsRPC.kogskoglist(true, out ids, out err);
-		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
-
-		rc = KogsRPC.kogscreateplayer("myname", "mydesc", out txData, out err);
-		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
-
-		string[] playerids = { "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" };
-		rc = KogsRPC.kogsstartgame("650dd21139e11798fd13869c66e92f6267432983ffb26d905474d09ae029c543", playerids, out txData, out err);
-		Debug.Log("KogsRPC.kogsstartgame rc=" + rc + " error=" + err);
-
-		KogsBaseInfo baseInfo;
-		rc = KogsRPC.kogsobjectinfo("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", out baseInfo, out err);
-		Debug.Log("KogsRPC.kogsobjectinfo rc=" + rc + " error=" + err + " baseInfo.objectId=" + (baseInfo != null ? baseInfo.objectType : "baseInfo-is-null"));
-		if (baseInfo != null)
+	/*	void OnGUI()
 		{
-			KogsGameStatus gameStatus = (KogsGameStatus)baseInfo;
-			Debug.Log("KogsRPC.kogsobjectinfo baseInfo.objectId=" + baseInfo.objectType + " gameStatus.result=" + gameStatus.result);
-		}
-		else
-			Debug.Log("KogsRPC.kogsobjectinfo baseInfo is null");
 
-		rc = KogsRPC.kogsburntoken("10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd", out txData, out err);
-		Debug.Log("KogsRPC.kogsburntoken rc=" + rc + " error=" + err);
+			if (enterred) return;
+			enterred = true;
 
-		rc = KogsRPC.kogsslamdata("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", 10, 15, out txData, out err);
-		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err);
+			string[] ids;
+			int rc;
+			string err;
+			string sChainName = "DIMXY11";
+			string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";
+			string txData = "";
 
-		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
-		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
-	}*/
+			rc = NSPV.Init(sChainName, out err);
+			Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
+			GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
+
+			rc = NSPV.Login(wifStr, out err);
+			Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
+
+			rc = KogsRPC.kogskoglist(true, out ids, out err);
+			Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
+
+			rc = KogsRPC.kogscreateplayer("myname", "mydesc", out txData, out err);
+			Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
+
+			string[] playerids = { "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" };
+			rc = KogsRPC.kogsstartgame("650dd21139e11798fd13869c66e92f6267432983ffb26d905474d09ae029c543", playerids, out txData, out err);
+			Debug.Log("KogsRPC.kogsstartgame rc=" + rc + " error=" + err);
+
+			KogsBaseInfo baseInfo;
+			rc = KogsRPC.kogsobjectinfo("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", out baseInfo, out err);
+			Debug.Log("KogsRPC.kogsobjectinfo rc=" + rc + " error=" + err + " baseInfo.objectId=" + (baseInfo != null ? baseInfo.objectType : "baseInfo-is-null"));
+			if (baseInfo != null)
+			{
+				KogsGameStatus gameStatus = (KogsGameStatus)baseInfo;
+				Debug.Log("KogsRPC.kogsobjectinfo baseInfo.objectId=" + baseInfo.objectType + " gameStatus.result=" + gameStatus.result);
+			}
+			else
+				Debug.Log("KogsRPC.kogsobjectinfo baseInfo is null");
+
+			rc = KogsRPC.kogsburntoken("10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd", out txData, out err);
+			Debug.Log("KogsRPC.kogsburntoken rc=" + rc + " error=" + err);
+
+			rc = KogsRPC.kogsslamdata("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", 10, 15, out txData, out err);
+			Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err);
+
+			rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
+			Debug.Log("KogsRPC.kogsgamelist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
+		}*/
 }
