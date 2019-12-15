@@ -9,20 +9,33 @@ using kogs;
 namespace kogs
 {
 
-	[Serializable]
-	class SubFulFillmentBase
+/*	[Serializable]
+	class SubfulfillmentBase
 	{
 		public string type;
-		public string code;
-		public string scriptPubKey;
 	}
 
 	[Serializable]
-	class SubFulFillmentEval : SubFulFillmentBase
+	class SubfulfillmentEval : SubfulfillmentBase
 	{
-		public string type;
+		public const string typeid = "eval-sha-256";
 		public string code;
-		public string scriptPubKey;
+	}
+
+	[Serializable]
+	class SubfulfillmentThreshold : SubfulfillmentBase
+	{
+		public const string typeid = "threshold-sha-256";
+		public int threshold;
+		public SubfulfillmentBase []subfulfillments;
+	}
+
+	[Serializable]
+	class SubfulfillmentSecp256k1 : SubfulfillmentBase
+	{
+		public const string typeid = "secp256k1-sha-256";
+		public string code;
+		public string publicKey;
 	}
 
 	[Serializable]
@@ -30,7 +43,7 @@ namespace kogs
 	{
 		public string type;
 		public int threshold;
-		public SubFulFillmentBase []subfulfillments;
+		public SubfulfillmentBase []subfulfillments;
 	}
 
 
@@ -41,17 +54,17 @@ namespace kogs
 		public long amount;
 		public string scriptPubKey;
 		public CC cc;
+
+		SigData() { cc = null; }
 	}
 
 
 	[Serializable]
 	class TxData
 	{
-		//public string result;
 		public string hex;
-		public string sigData;
-		//public string error;
-	}
+		public SigData []SigData;
+	} */
 
 	[Serializable]
 	class BroadcastResult
@@ -62,12 +75,6 @@ namespace kogs
 		public int retcode;
 		public string type;
 	}
-
-	/*[Serializable]
-	public class _txid
-	{
-		public string txid;
-	};*/
 
 	[Serializable]
 	class TokenidsResult
@@ -118,13 +125,13 @@ namespace kogs
 		public string[] tokenids;
 	};
 
-	[Serializable]
+	/*[Serializable]
 	class KogsContainerResult 
 	{
 		public string result;
 		public string error;
 		public TxData[] hextxns;
-	};
+	};*/
 
 
 	[Serializable]
@@ -175,7 +182,7 @@ namespace kogs
 		// Calls rpc method with params passed in jparams string which should contain json array
 		// resultPtr is reference to the string with the json result returned from rpc
 		// returns == 0 if success, if not 0, a err msg is returned in errorStr 
-		protected static extern int uplugin_CallRpcMethod([MarshalAs(UnmanagedType.LPStr)]string method, [MarshalAs(UnmanagedType.LPStr)]string jparams, out Int64 resultPtr, StringBuilder errorStr);
+		public static extern int uplugin_CallRpcMethod([MarshalAs(UnmanagedType.LPStr)]string method, [MarshalAs(UnmanagedType.LPStr)]string jparams, out Int64 resultPtr, StringBuilder errorStr);
 
 		[DllImport("kogsplugin")]
 		// Calls rpc method with JSON request passed in jsonStr string param 
@@ -213,7 +220,8 @@ namespace kogs
 		// de-initializes the libnspv, closes connections to the chain
 		protected static extern void uplugin_FinishNSPV();
 
-		protected static string NSPVPtr2String(Int64 resultPtr, out string errorStr)
+		// protected
+		public static string NSPVPtr2String(Int64 resultPtr, out string errorStr)
 		{
 			int resultLen = 0;
 			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
@@ -371,21 +379,6 @@ namespace kogs
 			if (rc == 0)
 			{
 				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
-				//string jresult = "[ \"111\", \"222\"]";
-				// string jresult = "{ \"result\":{ \"kogids\":[\"10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd\"]	}}";
-				//string jresult = "{ \"result\":{ \"kogids\":[{\"txid\": \"10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd\"}]	}}";
-
-				/*KogIdsResult res = JsonUtility.FromJson<KogIdsResult>(jresult);
-				kogidsOut = null; // res.result.kogids.txids;
-				Debug.Log("size=" + res.result.kogids.Length);
-				//Debug.Log("elem[0]=" + res.result.kogids[0].txid);
-				Debug.Log("elem[0]=" + res.result.kogids[0]);*/
-
-				//string []s = JsonUtility.FromJson<string[]>(jresult);
-				//string[] arr = new string[2];
-				//arr[0] = "s000001";
-				//arr[1] = "s000002"; 
-				// string json = JsonUtility.ToJson(arr);
 				Debug.Log("jresult=" + jresult);
 				TokenidsResult result = JsonUtility.FromJson<TokenidsResult>(jresult);
 				tokenidsOut = result.tokenids;
@@ -493,32 +486,36 @@ namespace kogs
 		private static void ParseHextxns(string sHextxns, out string []txDataArr)
 		{
 			txDataArr = null;
-			string prop = "\"hextxns\":";
-			int propIndex = sHextxns.IndexOf(prop);
-			if (propIndex > 0)
+			const string hextxnsPattern = "\"hextxns\":";
+			int hextxnsIndex = sHextxns.IndexOf(hextxnsPattern);
+			if (hextxnsIndex > 0)
 			{
-				int leftArrIndex = sHextxns.IndexOf("[", propIndex + prop.Length);
+				int leftArrIndex = sHextxns.IndexOf("[", hextxnsIndex + hextxnsPattern.Length);
 				int bracketLev = 1;
 				int parenthLev = 0;
 				int leftObjIndex = 0, rightObjIndex = 0;
 				ArrayList txDataList = new ArrayList();
 
-				// search for txDatas [{ }, {},..]
+				// search for txDatas as objects in the array [{ }, { },...]
 				for (int i = leftArrIndex + 1; i < sHextxns.Length; i++)
 				{
-					if (sHextxns[i] == ']')
+					if (sHextxns[i] == '[')
+					{
+						bracketLev++;
+					}
+					else if (sHextxns[i] == ']')
 					{
 						bracketLev--;
-						if( bracketLev == 1)  // found topmost array end
+						if (bracketLev == 0)  // found topmost array end
 							break;
 					}
-					if (sHextxns[i] == '{')
+					else if (sHextxns[i] == '{')
 					{
 						parenthLev++;
 						if (parenthLev == 1)
 							leftObjIndex = i;
 					}
-					if (sHextxns[i] == '}')
+					else if (sHextxns[i] == '}')
 					{
 						parenthLev--;
 						if (parenthLev == 0)
@@ -527,30 +524,129 @@ namespace kogs
 							txDataList.Add(sHextxns.Substring(leftObjIndex, rightObjIndex - leftObjIndex + 1));
 						}
 					}
-
+					else if (sHextxns[i] == '"')
+					{
+						i++;
+						while (i < sHextxns.Length && sHextxns[i] != '"') i++;   // skip quoted strings
+					}
 				}
-				txDataArr = (string [])txDataList.ToArray(typeof (String));
+				txDataArr = (string [])txDataList.ToArray(typeof(String));
 			}
 		}
 
+		/* Json parser works incorrectly: creates empty objects not present in json
+		  private static int lev = 0;
+		// checks subfulfillments type and resets the determined object type in subfulfillments
+		// returns true if there were any resets
+		private static bool resetSubfulfillments(ref SubfulfillmentBase []subfulfillments)
+		{
+			bool wasResets = false;
+			if (subfulfillments != null)
+			{
+				for(int i = 0; i < subfulfillments.Length; i ++)
+				{
+					Debug.Log("lev=" + lev + " i=" + i + " type=" + subfulfillments[i].type + " obj-type=" + subfulfillments[i].GetType());
+					// check parsed subfulfillment type and recreate subfulfillment object if it is not set already:
+					if (subfulfillments[i].type == SubfulfillmentEval.typeid && subfulfillments[i].GetType() != typeof(SubfulfillmentEval) )
+					{
+						subfulfillments[i] = new SubfulfillmentEval();
+						Debug.Log("lev=" + lev + " i=" + i + " after reset now obj-type=" + subfulfillments[i].GetType());
+						wasResets = true;
+					}
+					if (subfulfillments[i].type == SubfulfillmentSecp256k1.typeid && subfulfillments[i].GetType() != typeof(SubfulfillmentSecp256k1))
+					{
+						subfulfillments[i] = new SubfulfillmentSecp256k1();
+						wasResets = true;
+					}
+					if (subfulfillments[i].type == SubfulfillmentThreshold.typeid)
+					{
+						if (subfulfillments[i].GetType() != typeof(SubfulfillmentThreshold))
+						{
+							subfulfillments[i] = new SubfulfillmentThreshold();
+							wasResets = true;
+						}
+						else
+						{
+							SubfulfillmentThreshold threshold = (SubfulfillmentThreshold)subfulfillments[i];
+							if (threshold.subfulfillments != null)
+							{
+								lev++;
+								if (resetSubfulfillments(ref threshold.subfulfillments))
+									wasResets = true;
+								lev--;
+							}
+						}
+					}
+				}
+			}
+			Debug.Log("lev=" + lev + " wasResets=" + wasResets);
+			return wasResets;
+		}
+
+		private static void ParseHextxnsJson(string sHextxns, out string[] txDataArr)
+		{
+			txDataArr = null;
+			bool reparse = true;
+			KogsContainerResult containerResult = JsonUtility.FromJson<KogsContainerResult>(sHextxns);
+			//while (reparse)
+			for (int n = 0; n <= 3; n++)
+			{
+				reparse = false;
+				
+				Debug.Log("containerResult.hextxns.Length=" + containerResult.hextxns.Length);
+				if (containerResult.hextxns != null)
+				{
+					for(int i = 0; i < containerResult.hextxns.Length; i ++)
+					{
+						if (containerResult.hextxns[i].SigData != null) 
+						{
+							for (int s = 0; s < containerResult.hextxns[i].SigData.Length; s++)
+							{
+								if (containerResult.hextxns[i].SigData[s].cc != null && containerResult.hextxns[i].SigData[s].cc.subfulfillments != null)
+								{
+									// set flag to repeat parse for the reset subfulfillment types:
+									lev++;
+									if (resetSubfulfillments(ref containerResult.hextxns[i].SigData[s].cc.subfulfillments))
+										reparse = true;
+									lev--;
+								}
+							}
+						}
+					}
+				}
+
+				JsonUtility.FromJsonOverwrite(sHextxns, containerResult);
+			}
+			if (containerResult.hextxns != null)
+			{
+				ArrayList txDataList = new ArrayList();
+				foreach (TxData txData in containerResult.hextxns)
+				{
+					string sTxData = JsonUtility.ToJson(txData);
+					txDataList.Add(sTxData);
+				}
+				txDataArr = (string[])txDataList.ToArray(typeof(String));
+			}
+		}
+		*/
 
 		// rpc signature: 'kogscreatecontainer name description playerid tokenid1 tokenid2 ...'
 		// create a container
 		// return tx to sign and broadcast
-		public static int kogscreatecontainer(string name, string description, string playerid, string[] tokenids, out string []txDataArr, out string errorStr)
+		public static int kogscreatecontainer(string name, string description, string playerid, /*string[] tokenids,*/ out string txData, out string errorStr)
 		{
 			Int64 jresultPtr;
 			errorStr = "";
-			txDataArr = null;
+			txData = "";
 			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
 
 			RpcRequest<string[]> request = new RpcRequest<string[]>("kogscreatecontainer");
-			request.@params = new string[3 + tokenids.Length];
+			request.@params = new string[3 /*+ tokenids.Length*/];
 			request.@params[0] = name;
 			request.@params[1] = description;
 			request.@params[2] = playerid;
-			for (int i = 0; i < tokenids.Length; i++)
-				request.@params[i + 3] = tokenids[i];
+			/*for (int i = 0; i < tokenids.Length; i++)
+				request.@params[i + 3] = tokenids[i];*/
 
 			string requestStr = JsonUtility.ToJson(request);
 			Debug.Log("rpc request=" + requestStr);
@@ -560,23 +656,7 @@ namespace kogs
 			{
 				string sResult = NSPVPtr2String(jresultPtr, out errorStr);
 				Debug.Log("sResult=" + sResult);
-				/*KogsContainerResult jContainerResult = JsonUtility.FromJson<KogsContainerResult>(sResult);
-				Debug.Log("jContainerResult hextxns.Length=" + jContainerResult.hextxns.Length);
-
-				if (jContainerResult.hextxns.Length > 0)
-				{
-					txDataArr = new string[jContainerResult.hextxns.Length];
-					for (int i = 0; i < jContainerResult.hextxns.Length; i++)
-					{
-						txDataArr[i] = JsonUtility.ToJson(jContainerResult.hextxns[i]);
-						Debug.Log("txDataArr["+i+"]="+ txDataArr[i]);
-					}
-				}
-				else
-				{
-					errorStr = "invalid result";
-					return -1;
-				}*/
+				string[] txDataArr = null;
 				ParseHextxns(sResult, out txDataArr);
 				if (txDataArr != null)
 				{
@@ -584,6 +664,7 @@ namespace kogs
 					{
 						Debug.Log("txDataArr[" + i + "]=" + txDataArr[i]);
 					}
+					txData = txDataArr[0];
 				}
 				else
 					Debug.Log("txDataArr is null");
@@ -597,7 +678,7 @@ namespace kogs
 		// rpc signature: 'kogsaddkogstocontainer containerid tokenid1 tokenid2 ... slammerid...'
 		// add kogs to a container
 		// return tx to sign and broadcast
-		public static int kogsaddkogstocontainer(string containerid, string[] tokenids, out string txData, out string errorStr)
+		public static int kogsaddkogstocontainer(string containerid, string tokenid, out string txData, out string errorStr)
 		{
 			Int64 jresultPtr;
 			errorStr = "";
@@ -605,10 +686,11 @@ namespace kogs
 			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
 
 			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsaddkogstocontainer");
-			request.@params = new string[1 + tokenids.Length];
+			request.@params = new string[1 + 1 /*tokenids.Length*/];
 			request.@params[0] = containerid;
-			for (int i = 0; i < tokenids.Length; i++)
-				request.@params[i + 1] = tokenids[i];
+			request.@params[1] = tokenid;
+			//for (int i = 0; i < tokenids.Length; i++)
+			//	request.@params[i + 1] = tokenids[i];
 
 			string requestStr = JsonUtility.ToJson(request);
 			Debug.Log("rpc request=" + requestStr);
@@ -616,9 +698,21 @@ namespace kogs
 			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
 			if (rc == 0)
 			{
-				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
-				Debug.Log("jresult=" + jresult);
-				txData = jresult;
+				string sResult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("sResult=" + sResult);
+				string[] txDataArr = null;
+				ParseHextxns(sResult, out txDataArr);
+				if (txDataArr != null)
+				{
+					for (int i = 0; i < txDataArr.Length; i++)
+					{
+						Debug.Log("txDataArr[" + i + "]=" + txDataArr[i]);
+					}
+					txData = txDataArr[0];
+				}
+				else
+					Debug.Log("txDataArr is null");
+
 			}
 			else
 				errorStr = sbErrorStr.ToString();
@@ -762,22 +856,27 @@ public class KogsWrapper : MonoBehaviour
 
 	// run test calls to kogs blockchain rpcs
 	/*void OnGUI()
-	{*/
-		/*
+	{
 		if (enterred) return;
 		enterred = true;
 
+		StartCoroutine(WithDelays());
+	}
+
+	IEnumerator WithDelays()
+	{ 
 		string[] ids;
 		int rc;
 		string err;
 		string sChainName = "DIMXY11";
-		string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
+		//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
+		string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
 		//string wifStr = "Utgyem1EBZ42eEiuSF3cJT9m4VhjN27Z7vXWC9zRzMXhLa6ZLKBF";  //p1
 		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2
 		string txData = "";
 		string signedTx;
 		string errorStr;
-		string txid;
+		string txid = "";
 
 		rc = NSPV.Init(sChainName, out err);
 		Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
@@ -790,34 +889,86 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
 
 		rc = KogsRPC.kogscontainerlist(true, out ids, out err);
-		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));*/
+		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
 
-		/*
-		rc = KogsRPC.kogscreateplayer("myname2", "mydesc2", out txData, out err);
+		/*rc = KogsRPC.kogscreateplayer("player1-003", "d", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
-		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);*/
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+		*/
+
+		/*string myplayerid = "f6889d933dbc06be34c601d97492cc769ec438f2a0a348161e4fc8bea76ac354"; //"4f5272588fd9586d2e5ea45edd4279d63571fde9512216d3792ece9f91e27ca7";
+		//string player1 = "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204";
+		//string[] tokens = new string[]  {"42943d0582528ecc6ea41a7c9b9c5916a2f58cfae06a13c6108b614f1caeae60" };  // in container already
+		//string[] tokens = new string[] { "204e78060d9889df77f3406066e9c14bfbc99546529350012e62a8c02314d92a" };
+		//string[] tokens = new string[] { "3fef198a90fdef3ba0c61563a9f596f98df901a4aa0f9d48f216076cff7beef8", "8119dc39c023e08aeddb51827e62b69ccf49b51bdf9e27197f12ec5d61c0b522" };
+		string[] tokens = new string[] {  "b4d324183df02e056f2e9ff2959dc79d0b4d48f25db18d511535cf543c488ee5" };
+		string[] txDataArr = null;
+
+		rc = KogsRPC.kogsgamelist(myplayerid, out ids, out err);
+		Debug.Log("KogsRPC.kogsgamelist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
 
 		/*
-		string myplayerid = "4f5272588fd9586d2e5ea45edd4279d63571fde9512216d3792ece9f91e27ca7";
-		string[] tokens = new string[]  {"42943d0582528ecc6ea41a7c9b9c5916a2f58cfae06a13c6108b614f1caeae60" };
-		string[] txDataArr;
-		rc = KogsRPC.kogscreatecontainer("my-cont-1", "cont", myplayerid, tokens, out txDataArr, out err);
+		rc = KogsRPC.kogscreatecontainer("my-dimxy-cont-003", string.Empty, myplayerid, out txData, out err);
 		Debug.Log("KogsRPC.kogscreatecontainer rc=" + rc + " error=" + err);
-
-		foreach (string txData0 in txDataArr)
+		if (txData != null)
 		{
-			NSPV.FinalizeCCTx(txData0, out signedTx, out errorStr);
-			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr + " signedTx=" + signedTx);
 			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+			
+		}*/
+
+		//yield return new WaitForSeconds(0);
+
+		// check mempool - not supported
+		/*Int64 resultPtr;
+		StringBuilder sbErrorStr = new StringBuilder(128);
+		rc = NSPV.uplugin_CallRpcMethod("getrawmempool", "", out resultPtr, sbErrorStr);
+		Debug.Log("uplugin_CallRpcMethod getrawmempool rc=" + rc);
+		if (rc == 0)
+		{
+			string jresult = KogsRPC.NSPVPtr2String(resultPtr, out errorStr);
+			Debug.Log("getrawmempool: " + jresult);
 		}*/
 
 
+		/*
+		string mycontainderid = txid; // "e530a04734cec4fa0a457adaf2eda479a947a7da3c905bfd0bc45d56a534ba04"; //txid; // "8ed0bad23b0b924057c61dcc41e25e56411173af78ca4fc4f84c520f4dcb0c69";// txid; //  "f09d8cafbd44a34ce033b8f900159f53d76024939637050793541d2958601153";
+		string token1 = "b3a92e0d75cb2de6b12a490f2eb9aa388ab2a7ec9980210b0548ac0866836485";
+		string token2 = "7e2a02ac76d88a4e3a2d849f8f434d0869c84e9edd8d3ebd1089f930ad56f3fb";
+		rc = KogsRPC.kogsaddkogstocontainer(mycontainderid, token2, out txData, out err);
+		Debug.Log("KogsRPC.kogsaddkogstocontainer rc=" + rc + " error=" + err);
+		if (txData != null)
+		{	
+			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+			
+		}*/
+		/*
+		string mygameid = "a4143226346bcbe8f782c505b2d493daeed207e7df2917ea81df44fc905de907";
+		string mycontainerid2 = "b212fc6569283ba255301e5c6d400127b723697694c27adeaa1a4abc66960103";
+		rc = KogsRPC.kogsdepositcontainer(mygameid, mycontainerid2, out txData, out err);
+		Debug.Log("KogsRPC.kogsaddkogstocontainer rc=" + rc + " error=" + err);
+		/*if (txData != null)
+		{
+			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 
-		/*string[] playerids = { "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" };
+		}*/
+
+
+		// StartCoroutine(WaitSecCoroutine());
+
+		/*string[] playerids = { "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" }; */
+		/*string[] playerids = { "f6889d933dbc06be34c601d97492cc769ec438f2a0a348161e4fc8bea76ac354", "ec5ecbe5f7e55e824afcfaf3a5e7b9dfa4fb896c4a31d367ecabd007b694e4d2" };
 		rc = KogsRPC.kogsstartgame("650dd21139e11798fd13869c66e92f6267432983ffb26d905474d09ae029c543", playerids, out txData, out err);
 		Debug.Log("KogsRPC.kogsstartgame rc=" + rc + " error=" + err);
 
@@ -825,7 +976,7 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
-		Debug.Log("KogsRPC.kogsstartgame txid=" + txid);*/
+		Debug.Log("KogsRPC.kogsstartgame txid=" + txid); */
 
 		/*  KogsBaseInfo baseInfo;
 		rc = KogsRPC.kogsobjectinfo("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", out baseInfo, out err);
@@ -846,5 +997,18 @@ public class KogsWrapper : MonoBehaviour
 
 		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
 		Debug.Log("KogsRPC.kogsgamelist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));*/
-	/*}*/
+	//}
+
+	/*IEnumerator WaitSecCoroutine()
+	{
+		//Print the time of when the function is first called.
+		Debug.Log("Started Coroutine at timestamp : " + Time.time);
+
+		//yield on a new YieldInstruction that waits for 5 seconds.
+		yield return new WaitForSeconds(5);
+
+		//After we have waited 5 seconds print the time again.
+		Debug.Log("Finished Coroutine at timestamp : " + Time.time);
+	}*/
+
 }
