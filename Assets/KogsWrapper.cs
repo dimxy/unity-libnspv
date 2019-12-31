@@ -678,19 +678,19 @@ namespace kogs
 		// rpc signature: 'kogsaddkogstocontainer containerid tokenid1 tokenid2 ... slammerid...'
 		// add kogs to a container
 		// return tx to sign and broadcast
-		public static int kogsaddkogstocontainer(string containerid, string tokenid, out string txData, out string errorStr)
+		public static int kogsaddkogstocontainer(string containerid, string []tokenids, out string []txDataArr, out string errorStr)
 		{
 			Int64 jresultPtr;
 			errorStr = "";
-			txData = "";
+			txDataArr = null;
 			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
 
 			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsaddkogstocontainer");
-			request.@params = new string[1 + 1 /*tokenids.Length*/];
+			request.@params = new string[1 + tokenids.Length];
 			request.@params[0] = containerid;
-			request.@params[1] = tokenid;
-			//for (int i = 0; i < tokenids.Length; i++)
-			//	request.@params[i + 1] = tokenids[i];
+			//request.@params[1] = tokenid;
+			for (int i = 0; i < tokenids.Length; i++)
+				request.@params[i + 1] = tokenids[i];
 
 			string requestStr = JsonUtility.ToJson(request);
 			Debug.Log("rpc request=" + requestStr);
@@ -700,7 +700,7 @@ namespace kogs
 			{
 				string sResult = NSPVPtr2String(jresultPtr, out errorStr);
 				Debug.Log("sResult=" + sResult);
-				string[] txDataArr = null;
+				//string[] txDataArr = null;
 				ParseHextxns(sResult, out txDataArr);
 				if (txDataArr != null)
 				{
@@ -708,7 +708,7 @@ namespace kogs
 					{
 						Debug.Log("txDataArr[" + i + "]=" + txDataArr[i]);
 					}
-					txData = txDataArr[0];
+					//txData = txDataArr[0];
 				}
 				else
 					Debug.Log("txDataArr is null");
@@ -855,7 +855,7 @@ public class KogsWrapper : MonoBehaviour
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
-	/*void OnGUI()
+	void OnGUI()
 	{
 		if (enterred) return;
 		enterred = true;
@@ -865,14 +865,14 @@ public class KogsWrapper : MonoBehaviour
 
 	IEnumerator WithDelays()
 	{ 
-		string[] ids;
+		string[] kogids, containerids;
 		int rc;
 		string err;
 		string sChainName = "DIMXY11";
-		//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
-		string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
-		//string wifStr = "Utgyem1EBZ42eEiuSF3cJT9m4VhjN27Z7vXWC9zRzMXhLa6ZLKBF";  //p1
-		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2
+		string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
+		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
+		//string wifStr = "Utgyem1EBZ42eEiuSF3cJT9m4VhjN27Z7vXWC9zRzMXhLa6ZLKBF";  //p1  028e65778cd99898eea7073789359c55e67bdd78643263abf6328888f566d56f19
+		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2  02e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3
 		string txData = "";
 		string signedTx;
 		string errorStr;
@@ -885,11 +885,11 @@ public class KogsWrapper : MonoBehaviour
 		rc = NSPV.Login(wifStr, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
 
-		rc = KogsRPC.kogskoglist(true, out ids, out err);
-		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
+		rc = KogsRPC.kogskoglist(true, out kogids, out err);
+		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
 
-		rc = KogsRPC.kogscontainerlist(true, out ids, out err);
-		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));
+		rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
+		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
 
 		/*rc = KogsRPC.kogscreateplayer("player1-003", "d", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
@@ -922,7 +922,7 @@ public class KogsWrapper : MonoBehaviour
 			
 		}*/
 
-		//yield return new WaitForSeconds(0);
+		yield return new WaitForSeconds(0);
 
 		// check mempool - not supported
 		/*Int64 resultPtr;
@@ -939,17 +939,22 @@ public class KogsWrapper : MonoBehaviour
 		/*
 		string mycontainderid = txid; // "e530a04734cec4fa0a457adaf2eda479a947a7da3c905bfd0bc45d56a534ba04"; //txid; // "8ed0bad23b0b924057c61dcc41e25e56411173af78ca4fc4f84c520f4dcb0c69";// txid; //  "f09d8cafbd44a34ce033b8f900159f53d76024939637050793541d2958601153";
 		string token1 = "b3a92e0d75cb2de6b12a490f2eb9aa388ab2a7ec9980210b0548ac0866836485";
-		string token2 = "7e2a02ac76d88a4e3a2d849f8f434d0869c84e9edd8d3ebd1089f930ad56f3fb";
-		rc = KogsRPC.kogsaddkogstocontainer(mycontainderid, token2, out txData, out err);
+		string token2 = "7e2a02ac76d88a4e3a2d849f8f434d0869c84e9edd8d3ebd1089f930ad56f3fb";*/
+		string[] kogids2 = { kogids[0], kogids[1] };
+		string[] txDataArr = null;
+
+		rc = KogsRPC.kogsaddkogstocontainer(containerids[0], kogids2, out txDataArr, out err);
 		Debug.Log("KogsRPC.kogsaddkogstocontainer rc=" + rc + " error=" + err);
-		if (txData != null)
-		{	
-			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
-			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
-			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
-			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-			
-		}*/
+		if (txDataArr != null)
+		{
+			for (int i = 0; i < txDataArr.Length; i++)
+			{
+				NSPV.FinalizeCCTx(txDataArr[i], out signedTx, out errorStr);
+				Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+				NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+				Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+			}
+		}
 		/*
 		string mygameid = "a4143226346bcbe8f782c505b2d493daeed207e7df2917ea81df44fc905de907";
 		string mycontainerid2 = "b212fc6569283ba255301e5c6d400127b723697694c27adeaa1a4abc66960103";
@@ -997,7 +1002,7 @@ public class KogsWrapper : MonoBehaviour
 
 		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
 		Debug.Log("KogsRPC.kogsgamelist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));*/
-	//}
+	}
 
 	/*IEnumerator WaitSecCoroutine()
 	{
