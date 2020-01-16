@@ -15,5 +15,23 @@
     "p2p": 14722,
     "magic": "c15243db",
     "nSPV": "3.19.194.93"
+   },
+   {
+    "coin": "DIMXY13",
+    "asset": "DIMXY13",
+    "fname": "dimxy13",
+    "rpcport": 14723,
+    "p2p": 14722,
+    "magic": "ed334d35",
+    "nSPV": "3.136.47.223"
+   },
+   {
+    "coin": "RFOXLIKE",
+    "asset": "RFOXLIKE",
+    "fname": "rfoxlike",
+    "rpcport": 15223,
+    "p2p": 15222,
+    "magic": "d281acf6",
+    "nSPV": "3.19.194.93"
    }
 ]
