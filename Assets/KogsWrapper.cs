@@ -89,9 +89,7 @@ namespace kogs
 	class KogsAdvertisedPlayer
 	{
 		public string playerid;
-		public string playforkeeps;
-		public string playforfun;
-		public string playforwages;
+		public string []opts;  // contains list of supported modes
 	}
 
 	[Serializable]
@@ -782,8 +780,9 @@ namespace kogs
 		}
 
 		// rpc signature: kogsadvertiseplayer '{"playerid": "id", "playforkeeps":"true", "playforfun":"true", "playforwages":"true" }
-		// sends slam data to a game
-		// return tx to sign and broadcast
+		// creates advertise player tx
+		// opts is list of modes  KogsRPC.OPT_PLAYFORKEEPS, OPT_PLAYFORFUN, OPT_PLAYFORWAGES
+		// returns tx to sign and broadcast
 		public static int kogsadvertiseplayer(string playerid, string[] opts, out string txData, out string errorStr)
 		{
 			Int64 jresultPtr;
@@ -818,6 +817,7 @@ namespace kogs
 		}
 
 		// kogsadvertisedplayerlist rpc, call with no params
+		// returns json with array KogsAdvertisedPlayer
 		public static int kogsadvertisedplayerlist(out KogsAdvertisedPlayer [] adlistOut, out string errorStr)
 		{
 			Int64 jresultPtr;
@@ -848,7 +848,7 @@ namespace kogs
 
 public class KogsWrapper : MonoBehaviour
 {
-	/*
+	
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
@@ -1064,7 +1064,8 @@ public class KogsWrapper : MonoBehaviour
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
 		*/
-		/*
+		
+
 		rc = KogsRPC.kogscreateplayer("player-test-ad", "advertise", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
@@ -1083,8 +1084,12 @@ public class KogsWrapper : MonoBehaviour
 		KogsAdvertisedPlayer []adlist;
 		rc = KogsRPC.kogsadvertisedplayerlist(out adlist, out err);
 		Debug.Log("KogsRPC.kogsadvertisedplayerlist rc=" + rc + " error=" + err);
-		for(int i = 0; i < adlist.Length; i ++)
-			Debug.Log("adlist[" +i + "]="  + adlist[i].playerid + " playforkeeps=" + adlist[i].playforkeeps + " playforfun=" + adlist[i].playforfun + " playforwages=" + adlist[i].playforwages);
+		for (int i = 0; i < adlist.Length; i++)
+		{
+			Debug.Log("adlist[" + i + "]=" + adlist[i].playerid);
+			for (int j = 0; j < adlist[i].opts.Length; j++)
+				Debug.Log("opts=" + adlist[i].opts[j]);
+		}
 
 	}
 
