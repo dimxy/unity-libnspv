@@ -848,7 +848,7 @@ namespace kogs
 
 public class KogsWrapper : MonoBehaviour
 {
-	
+	/*
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
@@ -903,7 +903,7 @@ public class KogsWrapper : MonoBehaviour
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 		*/
-		string myplayerid = txid;
+		//string myplayerid = txid;
 
 
 
@@ -1064,7 +1064,7 @@ public class KogsWrapper : MonoBehaviour
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
 		*/
-		
+		/*
 
 		rc = KogsRPC.kogscreateplayer("player-test-ad", "advertise", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
