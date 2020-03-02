@@ -26,64 +26,6 @@ using kogs;
 namespace kogs
 {
 
-/*	cryptocondition parsing does not work because of Unity parser that creates empty objects	
- 	[Serializable]
-	class SubfulfillmentBase
-	{
-		public string type;
-	}
-
-	[Serializable]
-	class SubfulfillmentEval : SubfulfillmentBase
-	{
-		public const string typeid = "eval-sha-256";
-		public string code;
-	}
-
-	[Serializable]
-	class SubfulfillmentThreshold : SubfulfillmentBase
-	{
-		public const string typeid = "threshold-sha-256";
-		public int threshold;
-		public SubfulfillmentBase []subfulfillments;
-	}
-
-	[Serializable]
-	class SubfulfillmentSecp256k1 : SubfulfillmentBase
-	{
-		public const string typeid = "secp256k1-sha-256";
-		public string code;
-		public string publicKey;
-	}
-
-	[Serializable]
-	class CC
-	{
-		public string type;
-		public int threshold;
-		public SubfulfillmentBase []subfulfillments;
-	}
-
-
-	[Serializable]
-	class SigData
-	{
-		public int vin;
-		public long amount;
-		public string scriptPubKey;
-		public CC cc;
-
-		SigData() { cc = null; }
-	}
-
-
-	[Serializable]
-	class TxData
-	{
-		public string hex;
-		public SigData []SigData;
-	} */
-
 	[Serializable]
 	class BroadcastResult
 	{
@@ -141,6 +83,21 @@ namespace kogs
 	class KogsContainerInfo : KogsBaseInfo
 	{
 		public string[] tokenids;
+	};
+
+	[Serializable]
+	class KogsAdvertisedPlayer
+	{
+		public string playerid;
+		public string playforkeeps;
+		public string playforfun;
+		public string playforwages;
+	}
+
+	[Serializable]
+	class KogsAdvertisedInfo : KogsBaseInfo
+	{
+		public KogsAdvertisedPlayer[] advertisedPlayerList;
 	};
 
 	/*[Serializable]
@@ -336,6 +293,11 @@ namespace kogs
 	// kogs rpc methods
 	class KogsRPC : NSPV
 	{
+		// game modes:
+		public const string OPT_PLAYFORKEEPS = "playforkeeps";
+		public const string OPT_PLAYFORFUN = "playforfun";
+		public const string OPT_PLAYFORWAGES = "playforwages";
+
 		// rpc signature: 'kogskoglist [my]'
 		public static int kogskoglist(bool onlyMy, out string[] tokenidsOut, out string errorStr)
 		{
@@ -552,102 +514,6 @@ namespace kogs
 				txDataArr = (string [])txDataList.ToArray(typeof(String));
 			}
 		}
-
-		/* Json parser works incorrectly: creates empty objects not present in json
-		  private static int lev = 0;
-		// checks subfulfillments type and resets the determined object type in subfulfillments
-		// returns true if there were any resets
-		private static bool resetSubfulfillments(ref SubfulfillmentBase []subfulfillments)
-		{
-			bool wasResets = false;
-			if (subfulfillments != null)
-			{
-				for(int i = 0; i < subfulfillments.Length; i ++)
-				{
-					Debug.Log("lev=" + lev + " i=" + i + " type=" + subfulfillments[i].type + " obj-type=" + subfulfillments[i].GetType());
-					// check parsed subfulfillment type and recreate subfulfillment object if it is not set already:
-					if (subfulfillments[i].type == SubfulfillmentEval.typeid && subfulfillments[i].GetType() != typeof(SubfulfillmentEval) )
-					{
-						subfulfillments[i] = new SubfulfillmentEval();
-						Debug.Log("lev=" + lev + " i=" + i + " after reset now obj-type=" + subfulfillments[i].GetType());
-						wasResets = true;
-					}
-					if (subfulfillments[i].type == SubfulfillmentSecp256k1.typeid && subfulfillments[i].GetType() != typeof(SubfulfillmentSecp256k1))
-					{
-						subfulfillments[i] = new SubfulfillmentSecp256k1();
-						wasResets = true;
-					}
-					if (subfulfillments[i].type == SubfulfillmentThreshold.typeid)
-					{
-						if (subfulfillments[i].GetType() != typeof(SubfulfillmentThreshold))
-						{
-							subfulfillments[i] = new SubfulfillmentThreshold();
-							wasResets = true;
-						}
-						else
-						{
-							SubfulfillmentThreshold threshold = (SubfulfillmentThreshold)subfulfillments[i];
-							if (threshold.subfulfillments != null)
-							{
-								lev++;
-								if (resetSubfulfillments(ref threshold.subfulfillments))
-									wasResets = true;
-								lev--;
-							}
-						}
-					}
-				}
-			}
-			Debug.Log("lev=" + lev + " wasResets=" + wasResets);
-			return wasResets;
-		}
-
-		private static void ParseHextxnsJson(string sHextxns, out string[] txDataArr)
-		{
-			txDataArr = null;
-			bool reparse = true;
-			KogsContainerResult containerResult = JsonUtility.FromJson<KogsContainerResult>(sHextxns);
-			//while (reparse)
-			for (int n = 0; n <= 3; n++)
-			{
-				reparse = false;
-				
-				Debug.Log("containerResult.hextxns.Length=" + containerResult.hextxns.Length);
-				if (containerResult.hextxns != null)
-				{
-					for(int i = 0; i < containerResult.hextxns.Length; i ++)
-					{
-						if (containerResult.hextxns[i].SigData != null) 
-						{
-							for (int s = 0; s < containerResult.hextxns[i].SigData.Length; s++)
-							{
-								if (containerResult.hextxns[i].SigData[s].cc != null && containerResult.hextxns[i].SigData[s].cc.subfulfillments != null)
-								{
-									// set flag to repeat parse for the reset subfulfillment types:
-									lev++;
-									if (resetSubfulfillments(ref containerResult.hextxns[i].SigData[s].cc.subfulfillments))
-										reparse = true;
-									lev--;
-								}
-							}
-						}
-					}
-				}
-
-				JsonUtility.FromJsonOverwrite(sHextxns, containerResult);
-			}
-			if (containerResult.hextxns != null)
-			{
-				ArrayList txDataList = new ArrayList();
-				foreach (TxData txData in containerResult.hextxns)
-				{
-					string sTxData = JsonUtility.ToJson(txData);
-					txDataList.Add(sTxData);
-				}
-				txDataArr = (string[])txDataList.ToArray(typeof(String));
-			}
-		}
-		*/
 
 		// rpc signature: 'kogscreatecontainer name description playerid tokenid1 tokenid2 ...'
 		// create a container
@@ -914,13 +780,76 @@ namespace kogs
 				errorStr = sbErrorStr.ToString();
 			return rc;
 		}
+
+		// rpc signature: kogsadvertiseplayer '{"playerid": "id", "playforkeeps":"true", "playforfun":"true", "playforwages":"true" }
+		// sends slam data to a game
+		// return tx to sign and broadcast
+		public static int kogsadvertiseplayer(string playerid, string[] opts, out string txData, out string errorStr)
+		{
+			Int64 jresultPtr;
+			errorStr = "";
+			txData = "";
+			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
+
+			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsadvertiseplayer");
+			request.@params = new string[1];
+			request.@params[0] = "{ \"playerid\"" + ":" + "\"" + playerid + "\"" + ", " ;
+			for (int i = 0; i < opts.Length; i++)
+			{
+				request.@params[0] += "\"" + opts[i] + "\"" + ":" + "\"true\"";
+				if (i < opts.Length - 1)
+					request.@params[0] += ", ";
+			}
+			request.@params[0] += "}";
+
+			string requestStr = JsonUtility.ToJson(request);
+			Debug.Log("rpc request=" + requestStr);
+
+			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
+			if (rc == 0)
+			{
+				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("jresult=" + jresult);
+				txData = jresult;
+			}
+			else
+				errorStr = sbErrorStr.ToString();
+			return rc;
+		}
+
+		// kogsadvertisedplayerlist rpc, call with no params
+		public static int kogsadvertisedplayerlist(out KogsAdvertisedPlayer [] adlistOut, out string errorStr)
+		{
+			Int64 jresultPtr;
+			errorStr = "";
+			adlistOut = null;
+			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
+
+			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsadvertisedplayerlist");
+
+			string requestStr = JsonUtility.ToJson(request);
+			Debug.Log("rpc request=" + requestStr);
+			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
+			if (rc == 0)
+			{
+				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("jresult=" + jresult);
+				KogsAdvertisedInfo result = JsonUtility.FromJson<KogsAdvertisedInfo>(jresult);
+				adlistOut = result.advertisedPlayerList;
+			}
+			else
+				errorStr = sbErrorStr.ToString();
+
+			return rc;
+		}
+
 	};
 }
 
 public class KogsWrapper : MonoBehaviour
 {
-
-	/*private static bool enterred = false;
+	/*
+	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
 	void OnGUI()
@@ -928,21 +857,21 @@ public class KogsWrapper : MonoBehaviour
 		if (enterred) return;
 		enterred = true;
 
-//		StartCoroutine(WithDelays());
-//	}
+		//		StartCoroutine(WithDelays());
+		//	}
 
-//	IEnumerator WithDelays()
-//	{ 
-		string[] kogids, containerids;
+		//	IEnumerator WithDelays()
+		//	{ 
+		string[] kogids, containerids, packids;
 		int rc;
 		string err;
-		string sChainName = "DIMXY11";
-		//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
-		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
-		//string wifStr = "Utgyem1EBZ42eEiuSF3cJT9m4VhjN27Z7vXWC9zRzMXhLa6ZLKBF";  //p1  028e65778cd99898eea7073789359c55e67bdd78643263abf6328888f566d56f19
-		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2  02e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3
-		//string wifStr = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";  // my test key 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
-		string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed";  // sys pk
+		string sChainName = "RFOXLIKE"; //  "DIMXY11"; // "RFOXLIKE";
+										//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
+										//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
+										//string wifStr = "Utgyem1EBZ42eEiuSF3cJT9m4VhjN27Z7vXWC9zRzMXhLa6ZLKBF";  //p1  028e65778cd99898eea7073789359c55e67bdd78643263abf6328888f566d56f19
+		string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2  02e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3
+																				 //string wifStr = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";  // my test key 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
+																				 //string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed";  // sys pk
 
 		string txData = "";
 		string signedTx;
@@ -956,19 +885,27 @@ public class KogsWrapper : MonoBehaviour
 		rc = NSPV.Login(wifStr, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
 
-		rc = KogsRPC.kogskoglist(true, out kogids, out err);
-		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
+		///rc = KogsRPC.kogskoglist(true, out kogids, out err);
+		//Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
 
-		rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
-		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
+		//rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
+		//Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
 
-
-		/*rc = KogsRPC.kogscreateplayer("player2-004", "d", out txData, out err);
+		/*
+		rc = KogsRPC.kogspacklist(true, out packids, out err);
+		Debug.Log("KogsRPC.kogspacklist rc=" + rc + " error=" + err + " packids.Length=" + (packids != null ? packids.Length : 0));
+		*/
+		/*
+		rc = KogsRPC.kogscreateplayer("player2-004", "d", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
-		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);*/
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+		*/
+		string myplayerid = txid;
+
+
 
 		/*string myplayerid = "f6889d933dbc06be34c601d97492cc769ec438f2a0a348161e4fc8bea76ac354"; //"4f5272588fd9586d2e5ea45edd4279d63571fde9512216d3792ece9f91e27ca7";
 		//string player1 = "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204";
@@ -984,10 +921,21 @@ public class KogsWrapper : MonoBehaviour
 
 		//string myplayerid = "79452a5e38e65972bed57b160ce7e82c07e814398d95a1f4a3bbbe031f0b5b5b";  //my test wif 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
 		//string myplayerid = "8fe319bf7f663738dfbf4a422a74dc285197b096faa03214c76a07d3eb490c59";  // wif1
-																								 //string myplayerid = "f4d5c5467e9dc92fdcac48f4a13638f205d606f09136cba9fcf8bcd56621d195";   // wif2
+		//string myplayerid = "f4d5c5467e9dc92fdcac48f4a13638f205d606f09136cba9fcf8bcd56621d195";   // wif2
 
-		/*
-		rc = KogsRPC.kogscreatecontainer("my-dimxy-cont-004", "cont", myplayerid, out txData, out err);
+		/*rc = KogsRPC.kogsburntoken(kogids[0], out txData, out err);
+		Debug.Log("KogsRPC.kogsburntoken rc=" + rc + " error=" + err);
+		if (txData != null)
+		{
+			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr + " signedTx=" + signedTx);
+			//NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+			//Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+		}*/
+
+
+
+		/*rc = KogsRPC.kogscreatecontainer("my-dimxy-cont-004", "cont", myplayerid, out txData, out err);
 		Debug.Log("KogsRPC.kogscreatecontainer rc=" + rc + " error=" + err);
 		if (txData != null)
 		{
@@ -995,8 +943,8 @@ public class KogsWrapper : MonoBehaviour
 			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr + " signedTx=" + signedTx);
 			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-		}
-		*/
+		}*/
+		//string mycontainderid = containerids[0];
 
 		//yield return new WaitForSeconds(0);
 
@@ -1012,15 +960,20 @@ public class KogsWrapper : MonoBehaviour
 		}*/
 
 
-
 		//string mycontainderid = txid; // "e530a04734cec4fa0a457adaf2eda479a947a7da3c905bfd0bc45d56a534ba04"; //txid; // "8ed0bad23b0b924057c61dcc41e25e56411173af78ca4fc4f84c520f4dcb0c69";// txid; //  "f09d8cafbd44a34ce033b8f900159f53d76024939637050793541d2958601153";
 		/*string token1 = "b3a92e0d75cb2de6b12a490f2eb9aa388ab2a7ec9980210b0548ac0866836485";
 		string token2 = "7e2a02ac76d88a4e3a2d849f8f434d0869c84e9edd8d3ebd1089f930ad56f3fb";*/
 
-		/*string[] kogids2 = { kogids[0], kogids[1] };
-		
+
+		//mycontainderid = "03fe1cf4ff521a0f2d10b762242979ee90f22fb3d86beb8766861e38dd85b09e";
+		//string[] kogids2 = { kogids[0], kogids[1], kogids[2], kogids[3] };
+		//string[] kogids3 = { "05052ecc405cd997b65b63e8e79d9231ad44c66da2d1f1717056b7cdd3ca029e", "cce0426fc47eb55372e82b8db34f2b48085fa85c9a14e93b58a899233c26b19e", "20d3275e13a090a4b6b46e47864037e40a1e0098c475d63e4e787a395e4a959f", "1edc8ae6cb8a79f39d032fd7e92978ceacc6fb36efe93c9b1d2088dea41323a0" };
+		// string[] kogids4 = { "573ca1e0d7e44649920140256fbe0fb2f02e05cbe76ca842840e378e006cd8de", "b160395e26ecafadf25092fe67a6720ac2a7478d38bcd376ce556ae940a632f7" };
+		//string []kogids5 = { "aee4db40160e12af6713471e16830b62c8e83307e5e931f806d31af369aae70f", "62338bbfa1ad1129422c314bc97d1a1ce2d861d7ea827032197005c68bb61114", "c7c4c78d54a4da5c904ad06fa268f0486328d823b29be74c84cdaa710bb0031c", "ede0c2bdbca47461ea848c60eeca2693964fc44934beb6f3540d97539f7b8e1c" };
+
+		/*
 		string[] txDataArr = null;
-		rc = KogsRPC.kogsaddkogstocontainer(containerids[0], kogids2, out txDataArr, out err);
+		rc = KogsRPC.kogsaddkogstocontainer(mycontainderid, kogids2, out txDataArr, out err);
 		Debug.Log("KogsRPC.kogsaddkogstocontainer rc=" + rc + " error=" + err);
 		if (txDataArr != null)
 		{
@@ -1034,10 +987,10 @@ public class KogsWrapper : MonoBehaviour
 		}
 		*/
 
-		/*string[] kogids2 = {"8a4a47a2ad1c2c39b2fc79bfb0bde2983a1f345550466d459dafa8a6f54cae13",	"ec1af564d4f4979b93f748e05e89f97fe59739c87837484d9caf80d29debb2cf" };
-
-		string[] txDataArr = null;
-		rc = KogsRPC.kogsremovekogsfromcontainer("9e07836a2428949faebc04e450f8257c3daf126ce630fb62ace4406370c5e41e", kogids2, out txDataArr, out err);
+		//string[] kogids2 = {"afeaff2624c0943dfd1aece311b52ad5e1f0d65527479c23b06a95c967696eaa", "bca7fd233fe12904b69dccf31de5320c3f4772b294cb16e371385cf65d054ea9" };
+		/*
+		txDataArr = null;
+		rc = KogsRPC.kogsremovekogsfromcontainer(mycontainderid, kogids2, out txDataArr, out err);
 		Debug.Log("KogsRPC.kogsremovekogsfromcontainer rc=" + rc + " error=" + err);
 		if (txDataArr != null)
 		{
@@ -1045,11 +998,11 @@ public class KogsWrapper : MonoBehaviour
 			{
 				NSPV.FinalizeCCTx(txDataArr[i], out signedTx, out errorStr);
 				Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
-				//NSPV.BroadcastTx(signedTx, out txid, out errorStr);
-				//Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+				NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+				Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 			}
-		}*/
-
+		}
+		*/
 
 		/*
 		string mygameid = "a4143226346bcbe8f782c505b2d493daeed207e7df2917ea81df44fc905de907";
@@ -1080,18 +1033,20 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
 		Debug.Log("KogsRPC.kogsstartgame txid=" + txid); */
 
-		/*  KogsBaseInfo baseInfo;
-		rc = KogsRPC.kogsobjectinfo("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", out baseInfo, out err);
-		Debug.Log("KogsRPC.kogsobjectinfo rc=" + rc + " error=" + err + " baseInfo.objectId=" + (baseInfo != null ? baseInfo.objectType : "baseInfo-is-null"));
+		/*KogsBaseInfo baseInfo;
+		rc = KogsRPC.kogsobjectinfo(kogids[0], out baseInfo, out err);
+		Debug.Log("KogsRPC.kogsobjectinfo rc=" + rc + " error=" + err + " baseInfo.objectType=" + (baseInfo != null ? baseInfo.objectType : "baseInfo-is-null"));
 		if (baseInfo != null)
 		{
-			KogsGameStatus gameStatus = (KogsGameStatus)baseInfo;
-			Debug.Log("KogsRPC.kogsobjectinfo baseInfo.objectId=" + baseInfo.objectType + " gameStatus.result=" + gameStatus.result);
+			//KogsGameStatus gameStatus = (KogsGameStatus)baseInfo;
+			KogsMatchObjectInfo matchobj = (KogsMatchObjectInfo)baseInfo;
+			//Debug.Log("KogsRPC.kogsobjectinfo baseInfo.objectId=" + baseInfo.objectType + " gameStatus.result=" + gameStatus.result);
+			Debug.Log("KogsRPC.kogsobjectinfo baseInfo.objectId=" + baseInfo.objectType + " matchobj.nameId=" + matchobj.nameId);
 		}
 		else
-			Debug.Log("KogsRPC.kogsobjectinfo baseInfo is null");
+			Debug.Log("KogsRPC.kogsobjectinfo baseInfo is null");*/
 
-		rc = KogsRPC.kogsburntoken("10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd", out txData, out err);
+		/*rc = KogsRPC.kogsburntoken("10e4dfef7a81da3654f6c424ffe9d5a394f87650a83fd8eef5aa96746eda03fd", out txData, out err);
 		Debug.Log("KogsRPC.kogsburntoken rc=" + rc + " error=" + err);
 
 		rc = KogsRPC.kogsslamdata("bee801d2f5d870a8d3e4ab282e1238560e7b16b078791cd33dc1134f6874e703", "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204", 10, 15, out txData, out err);
@@ -1099,7 +1054,42 @@ public class KogsWrapper : MonoBehaviour
 
 		rc = KogsRPC.kogsgamelist("10f84ddc4b35287253aa44a7d1edb19d05a75854b3f36e8091972067350571fe", out ids, out err);
 		Debug.Log("KogsRPC.kogsgamelist rc=" + rc + " error=" + err + " ids.Length=" + (ids != null ? ids.Length : 0));*/
-	//}
+
+		/*
+		rc = KogsRPC.kogsslamdata("c19674e06e579ad3dbaa6c754cdb07af7811e76501785b2f881b4292df191312", "5253d25bb351cf6a8002865389e3a51cd8b63abe295107aeaca6a9bb3adaae87", 50, 55, out txData, out err);
+		Debug.Log("KogsRPC.kogsslamdata rc=" + rc + " error=" + err);
+
+		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
+		*/
+		/*
+		rc = KogsRPC.kogscreateplayer("player-test-ad", "advertise", out txData, out err);
+		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
+		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+
+		string[] opts = { KogsRPC.OPT_PLAYFORKEEPS, KogsRPC.OPT_PLAYFORWAGES };
+		rc = KogsRPC.kogsadvertiseplayer(txid, opts, out txData, out err);
+		Debug.Log("KogsRPC.kogsadvertiseplayer rc=" + rc + " error=" + err);
+		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+
+		KogsAdvertisedPlayer []adlist;
+		rc = KogsRPC.kogsadvertisedplayerlist(out adlist, out err);
+		Debug.Log("KogsRPC.kogsadvertisedplayerlist rc=" + rc + " error=" + err);
+		for(int i = 0; i < adlist.Length; i ++)
+			Debug.Log("adlist[" +i + "]="  + adlist[i].playerid + " playforkeeps=" + adlist[i].playforkeeps + " playforfun=" + adlist[i].playforfun + " playforwages=" + adlist[i].playforwages);
+
+	}
+
+
+
 
 	/*IEnumerator WaitSecCoroutine()
 	{
