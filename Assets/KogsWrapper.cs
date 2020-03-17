@@ -792,14 +792,14 @@ namespace kogs
 
 			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsadvertiseplayer");
 			request.@params = new string[1];
-			request.@params[0] = "{ \"playerid\"" + ":" + "\"" + playerid + "\"" + ", " ;
+			request.@params[0] = "{ \"playerid\"" + ":" + "\"" + playerid + "\"" + ", \"opts\": [" ;
 			for (int i = 0; i < opts.Length; i++)
 			{
-				request.@params[0] += "\"" + opts[i] + "\"" + ":" + "\"true\"";
+				request.@params[0] += "\"" + opts[i] + "\"";
 				if (i < opts.Length - 1)
 					request.@params[0] += ", ";
 			}
-			request.@params[0] += "}";
+			request.@params[0] += "] }";
 
 			string requestStr = JsonUtility.ToJson(request);
 			Debug.Log("rpc request=" + requestStr);
@@ -843,17 +843,45 @@ namespace kogs
 			return rc;
 		}
 
+		// rpc signature: kogsstopadvertiseplayer playerid
+		// creates stop advertise player tx
+		public static int kogsstopadvertiseplayer(string playerid, out string txData, out string errorStr)
+		{
+			Int64 jresultPtr;
+			errorStr = "";
+			txData = "";
+			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
+
+			RpcRequest<string[]> request = new RpcRequest<string[]>("kogsstopadvertiseplayer");
+			request.@params = new string[] { playerid };
+
+			string requestStr = JsonUtility.ToJson(request);
+			Debug.Log("rpc request=" + requestStr);
+
+			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
+			if (rc == 0)
+			{
+				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("jresult=" + jresult);
+				txData = jresult;
+			}
+			else
+				errorStr = sbErrorStr.ToString();
+			return rc;
+		}
+
 	};
 }
 
 public class KogsWrapper : MonoBehaviour
 {
-	/*
+
 	private static bool enterred = false;
 
 	// run test calls to kogs blockchain rpcs
 	void OnGUI()
 	{
+		/*
 		if (enterred) return;
 		enterred = true;
 
@@ -862,6 +890,7 @@ public class KogsWrapper : MonoBehaviour
 
 		//	IEnumerator WithDelays()
 		//	{ 
+
 		string[] kogids, containerids, packids;
 		int rc;
 		string err;
@@ -885,11 +914,12 @@ public class KogsWrapper : MonoBehaviour
 		rc = NSPV.Login(wifStr, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);
 
-		///rc = KogsRPC.kogskoglist(true, out kogids, out err);
-		//Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
+		rc = KogsRPC.kogskoglist(true, out kogids, out err);
+		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
 
-		//rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
-		//Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
+		rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
+		Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
+		*/
 
 		/*
 		rc = KogsRPC.kogspacklist(true, out packids, out err);
@@ -961,7 +991,8 @@ public class KogsWrapper : MonoBehaviour
 
 
 		//string mycontainderid = txid; // "e530a04734cec4fa0a457adaf2eda479a947a7da3c905bfd0bc45d56a534ba04"; //txid; // "8ed0bad23b0b924057c61dcc41e25e56411173af78ca4fc4f84c520f4dcb0c69";// txid; //  "f09d8cafbd44a34ce033b8f900159f53d76024939637050793541d2958601153";
-		/*string token1 = "b3a92e0d75cb2de6b12a490f2eb9aa388ab2a7ec9980210b0548ac0866836485";
+		/*
+		string token1 = "b3a92e0d75cb2de6b12a490f2eb9aa388ab2a7ec9980210b0548ac0866836485";
 		string token2 = "7e2a02ac76d88a4e3a2d849f8f434d0869c84e9edd8d3ebd1089f930ad56f3fb";*/
 
 
@@ -1064,24 +1095,26 @@ public class KogsWrapper : MonoBehaviour
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr);
 		*/
+
 		/*
+		string crplayerid;
 
 		rc = KogsRPC.kogscreateplayer("player-test-ad", "advertise", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
-		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		NSPV.BroadcastTx(signedTx, out crplayerid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 
 		string[] opts = { KogsRPC.OPT_PLAYFORKEEPS, KogsRPC.OPT_PLAYFORWAGES };
-		rc = KogsRPC.kogsadvertiseplayer(txid, opts, out txData, out err);
+		rc = KogsRPC.kogsadvertiseplayer(crplayerid, opts, out txData, out err);
 		Debug.Log("KogsRPC.kogsadvertiseplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 
-		KogsAdvertisedPlayer []adlist;
+		KogsAdvertisedPlayer[] adlist;
 		rc = KogsRPC.kogsadvertisedplayerlist(out adlist, out err);
 		Debug.Log("KogsRPC.kogsadvertisedplayerlist rc=" + rc + " error=" + err);
 		for (int i = 0; i < adlist.Length; i++)
@@ -1091,21 +1124,52 @@ public class KogsWrapper : MonoBehaviour
 				Debug.Log("opts=" + adlist[i].opts[j]);
 		}
 
+		rc = KogsRPC.kogsstopadvertiseplayer(crplayerid, out txData, out err);
+		Debug.Log("KogsRPC.kogsstopadvertiseplayer rc=" + rc + " error=" + err);
+		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+		*/
+
+		/*
+		NSPV_remoterpccall request json=0000023610595DB0 ({
+	    "method":    "kogsaddkogstocontainer",
+		"params":    ["dbf532e1ad8ba3da89a58fd76a4f9f0baa5b60a5849d59dd2372b50c7a7683ba", "cb0384bd0631b86ee8cf4e0a2d7af6959ffe4098a409707200c2280e4aa0193d", "35e3dfcd6b48b83e6eef6cd34a9024deea99b8e333fb13f189f26ab1a899e93e", "ea634c6c8bcce2218d8cbc05d1ebef16e1a35c603b64fcd17dc16b37e9787f3f", "1da24d10a9195d2e792dd6166225fc9f2709cba2f9d3a4ad6275f7bf2eb94440"],
+		"mypk":    "028e65778cd99898eea7073789359c55e67bdd78643263abf6328888f566d56f19"	})
+		*/
+		/*		
+			string[] txDataArr = null;
+			string[] nfts1 = { "2d8e08fe4b5830d97db3ed841c5b57c4a51ce3440b61d0a3c7fbb9d8a0e4c2d4" };// "cb0384bd0631b86ee8cf4e0a2d7af6959ffe4098a409707200c2280e4aa0193d" }; //, "35e3dfcd6b48b83e6eef6cd34a9024deea99b8e333fb13f189f26ab1a899e93e" };//, "ea634c6c8bcce2218d8cbc05d1ebef16e1a35c603b64fcd17dc16b37e9787f3f", "1da24d10a9195d2e792dd6166225fc9f2709cba2f9d3a4ad6275f7bf2eb94440" };
+			rc = KogsRPC.kogsaddkogstocontainer(containerids[0], nfts1, out txDataArr, out err);
+			Debug.Log("KogsRPC.kogsaddkogstocontainer rc=" + rc + " error=" + err);
+			if (txDataArr != null)
+			{
+				for (int i = 0; i < txDataArr.Length; i++)
+				{
+					NSPV.FinalizeCCTx(txDataArr[i], out signedTx, out errorStr);
+					Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+					//NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+					//Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+				}
+			}
+
+		}*/
+
+
+
+
+		/*IEnumerator WaitSecCoroutine()
+		{
+			//Print the time of when the function is first called.
+			Debug.Log("Started Coroutine at timestamp : " + Time.time);
+
+			//yield on a new YieldInstruction that waits for 5 seconds.
+			yield return new WaitForSeconds(5);
+
+			//After we have waited 5 seconds print the time again.
+			Debug.Log("Finished Coroutine at timestamp : " + Time.time);
+		}*/
+
 	}
-
-
-
-
-	/*IEnumerator WaitSecCoroutine()
-	{
-		//Print the time of when the function is first called.
-		Debug.Log("Started Coroutine at timestamp : " + Time.time);
-
-		//yield on a new YieldInstruction that waits for 5 seconds.
-		yield return new WaitForSeconds(5);
-
-		//After we have waited 5 seconds print the time again.
-		Debug.Log("Finished Coroutine at timestamp : " + Time.time);
-	}*/
-
 }
