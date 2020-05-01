@@ -31,7 +31,18 @@
     "fname": "rfoxlike",
     "rpcport": 15223,
     "p2p": 15222,
-    "magic": "d281acf6",
+    "magic": "17FAC40B",
     "nSPV": "3.19.194.93"
+   },
+	
+   {
+    "coin": "DIMXY14",
+    "asset": "DIMXY14",
+    "fname": "dimxy14",
+    "rpcport": 15223,
+    "p2p": 15222,
+    "magic": "4ea629ab",
+    "nSPV": "127.0.0.1"
    }
+   
 ]
