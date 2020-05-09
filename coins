@@ -1,13 +1,5 @@
 [
    {
-    "coin": "HOT",
-    "name": "holo-token",
-    "fname": "Holo Token",
-    "etomic": "0x6c6EE5e31d828De241282B9606C8e98Ea48526E2",
-    "rpcport": 80,
-    "mm2": 1
-   },
-   {
     "coin": "DIMXY11",
     "asset": "DIMXY11",
     "fname": "dimxy11",
@@ -39,10 +31,10 @@
     "coin": "DIMXY14",
     "asset": "DIMXY14",
     "fname": "dimxy14",
-    "rpcport": 15223,
-    "p2p": 15222,
+    "rpcport": 14723,
+    "p2p": 14722,
     "magic": "4ea629ab",
-    "nSPV": "127.0.0.1"
+    "nSPV": "3.136.47.223"
    }
    
 ]
