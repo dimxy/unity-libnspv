@@ -1143,17 +1143,16 @@ public class KogsWrapper : MonoBehaviour
 		enterred = true;
 
 		Debug.Log("OnGUI() started");
-		//		StartCoroutine(WithDelays());
-		//	}
+		StartCoroutine( RunTests() );
+	}
 
-		//	IEnumerator WithDelays()
-		//	{ 
-
+	IEnumerator RunTests()
+	{ 
 		string[] kogids, containerids, packids, playerids;
 		int rc;
 		string err;
-		//string sChainName = "RFOXLIKE"; //  "DIMXY11"; // "RFOXLIKE";
-		string sChainName = "DIMXY14"; //  "DIMXY11"; // "RFOXLIKE";
+		string sChainName = "RFOXLIKE"; //  "DIMXY11"; // "RFOXLIKE";
+		//string sChainName = "DIMXY14"; //  "DIMXY11"; // "RFOXLIKE";
 
 		//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
 		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
@@ -1161,7 +1160,7 @@ public class KogsWrapper : MonoBehaviour
 		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2  02e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3
 																				 //string wifStr = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";  // my test key 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
 																				 //string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed";  // sys pk
-		//string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed"; // sys
+		string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed"; // sys
 		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";
    		// "address": "RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4",
    		// "pubkey": "025f97b6c42409e8e69eb2fdab281219aafe15169deec801ee621c63cc1ba0bb8c",
@@ -1173,24 +1172,35 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
 		GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
 
-		StartCoroutine( runTestGame() );
-		Debug.Log("after StartCoroutine runTestGame");
+	/*	yield return StartCoroutine( runTestGame() );
+		//yield return StartCoroutine( runDelays() );
 
+		//Debug.Log("after StartCoroutine runDelays");
+		//StartCoroutine( runFinish() );
+		Debug.Log("after runTestGame");
+
+		NSPV.Finish();
+		Debug.Log("NSPV.Finish exited"); */
 
 /*		string txData = "";
 		string signedTx;
 		string errorStr;
 		string txid = "";
 */
-/*
+
 		rc = NSPV.Login(wifStr, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err); 
-*/
-/*
+
+
 		rc = KogsRPC.kogskoglist(true, out kogids, out err);
 		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
-*/
 
+		yield break;
+
+/*
+		NSPV.Finish();
+		Debug.Log("NSPV.Finish exited");
+*/
 /*
 		//rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
 		//Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
@@ -1492,6 +1502,23 @@ public class KogsWrapper : MonoBehaviour
 
 	}
 
+	IEnumerator runDelays()
+	{
+		Debug.Log("Started runDelays at timestamp : " + Time.time);
+		yield return new WaitForSeconds(2);
+		Debug.Log("Continue 1 runDelays at timestamp : " + Time.time);
+		yield return new WaitForSeconds(2);
+		Debug.Log("Continue 2 runDelays at timestamp : " + Time.time);
+		yield return new WaitForSeconds(2);
+		Debug.Log("Exiting runDelays at timestamp : " + Time.time);
+	}
+
+	IEnumerator runFinish()
+	{
+		Debug.Log("Started runFinish at timestamp : " + Time.time);
+		yield break;
+	}
+
 	IEnumerator WaitSecCoroutine()
 	{
 		//Print the time of when the function is first called.
@@ -1736,7 +1763,7 @@ public class KogsWrapper : MonoBehaviour
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
 		string gameid = null;
-		//string gameid = "3b977318331cdf7f5be671e5ce68e543cedb85db1bd10767ad34fdfebecf9b03";
+		//string gameid = "b895cc1762f821c0d0051fcdca66ac587639e8cdc325a31fcfa7e39800a7061a";
 
 		// create or get player and container and get slammer
 		if (createOrGetGameObjects(wif1, out player1, out container1, out slammer1) == false && gameid == null) {
