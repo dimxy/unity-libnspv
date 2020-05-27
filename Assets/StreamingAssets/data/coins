@@ -31,7 +31,7 @@
     "fname": "rfoxlike",
     "rpcport": 15223,
     "p2p": 15222,
-    "magic": "d281acf6",
+    "magic": "17FAC40B",
     "nSPV": "3.19.194.93"
    }
 ]
