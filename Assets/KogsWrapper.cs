@@ -1801,7 +1801,7 @@ public class KogsWrapper : MonoBehaviour
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
 		string gameid = null;
-		//string gameid = "ef0b61644b1bb97972ea29d43feecb4ff84a6fb9cde09003c9b3615dad7a5d42";
+		//string gameid = "2ed61e824195f9c8782f940b4f8b98274e8980080e003f6d1925d2dc8ce27fb8";
 
 		// create or get player and container and get slammer
 		if (createOrGetGameObjects(wif1, out player1, out container1, out slammer1) == false && gameid == null) {
@@ -1925,8 +1925,10 @@ public class KogsWrapper : MonoBehaviour
 				||
 				!String.IsNullOrEmpty(expectedNext) && expectedNext != gameStat.gameinfo.NextPlayerId)  // next baton is not created
 			{	
-				if (++count == 3)
+				if (++count == 3)	{
+					Debug.Log("could not get next baton");
 					break;
+				}
 
 				if (String.IsNullOrEmpty(expectedNext))
 					Debug.Log("waiting for first baton");
