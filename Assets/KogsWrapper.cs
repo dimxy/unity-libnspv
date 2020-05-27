@@ -431,7 +431,7 @@ namespace kogs
 			return rc;
 		}
 
-		// rpc signature: 'kogsstartgame name desc params:{}'
+		// rpc signature: 'kogscreateplayer name desc params:{}'
 		// note: no param at this time
 		// returns txData to sign and broadcast
 		public static int kogscreateplayer(string name, string desc, out string txData, out string errorStr)
@@ -774,8 +774,6 @@ namespace kogs
 			return rc;
 		}
 
-
-
 		// rpc signature: 'kogsobjectinfo objectid'
 		// returns parsed info about game object in baseInfo
 		// the caller needs to query baseInfo.objectId param and cast to the corresponding type, like:
@@ -917,6 +915,34 @@ namespace kogs
 			request.@params = new string[] { playerid };
 
 			string requestStr = JsonUtility.ToJson(request);
+			Debug.Log("rpc request=" + requestStr);
+
+			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
+			if (rc == 0)
+			{
+				string jresult = NSPVPtr2String(jresultPtr, out errorStr);
+				Debug.Log("jresult=" + jresult);
+				txData = jresult;
+			}
+			else
+				errorStr = sbErrorStr.ToString();
+			return rc;
+		}
+
+		// rpc signature: 'kogscreatefirstbaton gameid'
+		public static int kogscreatefirstbaton(string gameid, out string txData, out string errorStr)
+		{
+			Int64 jresultPtr;
+			errorStr = "";
+			txData = "";
+			StringBuilder sbErrorStr = new StringBuilder(NSPV_MAXERRORLEN);
+
+			RpcRequest<string[]> request = new RpcRequest<string[]>("kogscreatefirstbaton");
+			request.@params = new string[1];
+			request.@params[0] = gameid;
+
+			string requestStr = JsonUtility.ToJson(request);
+
 			Debug.Log("rpc request=" + requestStr);
 
 			int rc = uplugin_CallRpcWithJson(requestStr, out jresultPtr, sbErrorStr);
@@ -1151,8 +1177,8 @@ public class KogsWrapper : MonoBehaviour
 		string[] kogids, containerids, packids, playerids;
 		int rc;
 		string err;
-		string sChainName = "RFOXLIKE"; //  "DIMXY11"; // "RFOXLIKE";
-		//string sChainName = "DIMXY14"; //  "DIMXY11"; // "RFOXLIKE";
+		//string sChainName = "RFOXLIKE"; //  "DIMXY11"; // "RFOXLIKE";
+		string sChainName = "DIMXY14"; //  "DIMXY11"; // "RFOXLIKE";
 
 		//string wifStr = "UuKUSQHnRGk4CDbRnbLRrJHq5Dwx58qR9Q9K2VpJjn3APXLurNcu";  // test "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc"
 		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";   // RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4
@@ -1160,11 +1186,11 @@ public class KogsWrapper : MonoBehaviour
 		//string wifStr = "Uu64bT9NDRTZQDSBxfrKbtRcYvv7qYk2RotQzsJfntJsMENuKrja";  //p2  02e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3
 																				 //string wifStr = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";  // my test key 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
 																				 //string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed";  // sys pk
-		string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed"; // sys
-		//string wifStr = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";
+		// string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed"; // sys
+		// string wif1 = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";
    		// "address": "RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4",
    		// "pubkey": "025f97b6c42409e8e69eb2fdab281219aafe15169deec801ee621c63cc1ba0bb8c",
-		//string wif2 = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";
+		// string wif2 = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";
    		// "address": "RLNXzPsfWkRvNbUcargXJchRsWXGSg7U4L",
    		// "pubkey": "025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41",
 
@@ -1172,69 +1198,75 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("NSPV.Init rc=" + rc + " error=" + err);
 		GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
 
-	/*	yield return StartCoroutine( runTestGame() );
+		yield return StartCoroutine( runTestGame() );
 		//yield return StartCoroutine( runDelays() );
 
 		//Debug.Log("after StartCoroutine runDelays");
 		//StartCoroutine( runFinish() );
 		Debug.Log("after runTestGame");
 
-		NSPV.Finish();
-		Debug.Log("NSPV.Finish exited"); */
+		//NSPV.Finish();
+		///Debug.Log("NSPV.Finish exited"); 
 
-/*		string txData = "";
+		// doSlam(wif2, "0dc05b25129d6fe4035922c129549021afe192c90752f5fb3a66a36d240131e1", "9db526ecca080b3ad53558c98276e54d9ff7f850610a22dde6760fc2e659c017");
+
+		//yield break;
+		/*
+		string txData = "";
 		string signedTx;
 		string errorStr;
-		string txid = "";
-*/
-
-		rc = NSPV.Login(wifStr, out err);
-		Debug.Log("NSPV.Login rc=" + rc + " error=" + err); 
-
-
+		string txid = ""; 
+		*/
+		/*
+		rc = NSPV.Login(wif2, out err);
+		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);  
+		*/
+		/*
 		rc = KogsRPC.kogskoglist(true, out kogids, out err);
 		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
 
 		yield break;
-
-/*
+		*/
+		/*
 		NSPV.Finish();
 		Debug.Log("NSPV.Finish exited");
-*/
-/*
+		*/
+		/*
 		//rc = KogsRPC.kogscontainerlist(true, out containerids, out err);
 		//Debug.Log("KogsRPC.kogscontainerlist rc=" + rc + " error=" + err + " containerids.Length=" + (containerids != null ? containerids.Length : 0));
-*/
+		*/
 
-/*		rc = KogsRPC.kogsplayerlist(true, out playerids, out err);
+		/*		
+		rc = KogsRPC.kogsplayerlist(true, out playerids, out err);
 		Debug.Log("KogsRPC.kogsplayerlist rc=" + rc + " error=" + err + " playerids.Length=" + (playerids != null ? playerids.Length : 0));
-*/
+		*/
 		
-/*		TokenOrder[] orders;
+		/*		
+		TokenOrder[] orders;
 		rc = KogsRPC.tokenordersf4(true, out orders, out err);
 		Debug.Log("KogsRPC.tokenordersf4 rc=" + rc + " error=" + err + " orders.Length=" + (orders != null ? orders.Length : 0));
 		for (int i = 0; i < orders.Length; i++)
 		{
 			Debug.Log("orders[" + i +"] funcid=" + orders[i].funcid + " txid=" + orders[i].txid + " tokenid=" + orders[i].tokenid + " amount=" + orders[i].amount + " required=" + orders[i].totalrequired + " price=" + orders[i].price);
 		}
-*/		
-/*
+		*/		
+		/*
 		rc = KogsRPC.tokenask(1, kogids[0], 0.0001, out txData, out err);
 		Debug.Log("KogsRPC.tokenask rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-*/
-/*
+		*/
+		/*
 		rc = KogsRPC.tokenfillask("bec426003de0fdb7fdd4e16da7f954a6b5610c0b2c184e99f1d7c4d7238e6098", "c5e49f0d821c3a674bdc5d4c42cb1d24096b8892aec9f21ed2a0bca6d8d6ebbb", 1, out txData, out err);
 		Debug.Log("KogsRPC.tokenfillask rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-*/
-/*
+		*/
+		/*
 		if (orders.Length > 0)  {	
 			rc = KogsRPC.tokencancelask(orders[0].tokenid, orders[0].txid, out txData, out err);
 			Debug.Log("KogsRPC.tokencancelask rc=" + rc + " error=" + err);
@@ -1243,40 +1275,46 @@ public class KogsWrapper : MonoBehaviour
 			NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 		}
-*/		
-/*
+		*/		
+		/*
 		rc = KogsRPC.tokenbid(1, kogids[0], 0.0001, out txData, out err);
 		Debug.Log("KogsRPC.tokenbid rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-*/
-
-/*
+		*/
+		/*
 		rc = KogsRPC.tokenfillbid("2df6b5d82e5cb1296de709b2cdbc1e67d734d82c6af4928e328d16010055c162", "a68eaf1839fc9326119e52afed2d0b0bb623e4ca3d8bb0f8e07139e25dc03da7", 1, out txData, out err);
 		Debug.Log("KogsRPC.tokenfillbid rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
 		NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 		Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
-*/
+		*/
 
 		/*
 		rc = KogsRPC.kogspacklist(true, out packids, out err);
 		Debug.Log("KogsRPC.kogspacklist rc=" + rc + " error=" + err + " packids.Length=" + (packids != null ? packids.Length : 0));
 		*/
-		
-		
-/*		rc = KogsRPC.kogscreateplayer("player2-004", "d", out txData, out err);
+
+		/*
+		rc = KogsRPC.kogscreateplayer("player2-004", "d", out txData, out err);
 		Debug.Log("KogsRPC.kogscreateplayer rc=" + rc + " error=" + err);
 		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
-		//NSPV.BroadcastTx(signedTx, out txid, out errorStr);
-		//Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);		
-		string myplayerid = txid;
-*/		
+		rc = NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx rc=" + rc + " errorStr=" + errorStr + " txid=" + txid);	*/	
 
+		/*	
+		rc = KogsRPC.kogsslamdata("ef0b61644b1bb97972ea29d43feecb4ff84a6fb9cde09003c9b3615dad7a5d42", "9db526ecca080b3ad53558c98276e54d9ff7f850610a22dde6760fc2e659c017", 50, 50, out txData, out errorStr);
+		Debug.Log("kogsslamdata rc=" + rc + " error=" + errorStr);
+		NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+		Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+		rc = NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+		Debug.Log("NSPV.BroadcastTx rc=" + rc + " errorStr=" + errorStr + " txid=" + txid);
+		*/
+ 
 		//string myplayerid = "f6889d933dbc06be34c601d97492cc769ec438f2a0a348161e4fc8bea76ac354"; //"4f5272588fd9586d2e5ea45edd4279d63571fde9512216d3792ece9f91e27ca7";
 		//string player1 = "076aa1693ff7539f6e313766e547ddd27820da50fd30c5bb3b25dff330383204";
 		//string[] tokens = new string[]  {"42943d0582528ecc6ea41a7c9b9c5916a2f58cfae06a13c6108b614f1caeae60" };  // in container already
@@ -1499,7 +1537,7 @@ public class KogsWrapper : MonoBehaviour
 
 		}*/
 		//NSPV.Finish();
-
+		yield break;
 	}
 
 	IEnumerator runDelays()
@@ -1763,7 +1801,7 @@ public class KogsWrapper : MonoBehaviour
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
 		string gameid = null;
-		//string gameid = "b895cc1762f821c0d0051fcdca66ac587639e8cdc325a31fcfa7e39800a7061a";
+		//string gameid = "ef0b61644b1bb97972ea29d43feecb4ff84a6fb9cde09003c9b3615dad7a5d42";
 
 		// create or get player and container and get slammer
 		if (createOrGetGameObjects(wif1, out player1, out container1, out slammer1) == false && gameid == null) {
@@ -1793,7 +1831,7 @@ public class KogsWrapper : MonoBehaviour
 		string []playerids = { player1, player2 };
 
 		rc = NSPV.Login(wif1, out errorStr);
-		Debug.Log("NSPV.Login rc=" + rc + " error=" + errorStr);
+		Debug.Log("NSPV.Login for wif1 rc=" + rc + " error=" + errorStr);
 		if (rc != 0)
 			yield break;
 
@@ -1827,8 +1865,44 @@ public class KogsWrapper : MonoBehaviour
 			}
 		}
 
-		string expectedNext = null;
 		int count = 0;
+		rc = NSPV.Login(wif1, out errorStr);
+		Debug.Log("NSPV.Login for wif1 rc=" + rc + " error=" + errorStr);
+		if (rc != 0)
+			yield break;
+		while(true) 
+		{
+			Debug.Log("waiting for depositing nfts to game...");
+			KogsBaseInfo baseInfo;
+			rc = KogsRPC.kogsobjectinfo(gameid, out baseInfo, out errorStr);
+			if (rc != 0) {
+				Debug.Log("can't get game status");
+				yield break;
+			}
+			KogsGameStatus gameStat = (KogsGameStatus)baseInfo;
+			if (!String.IsNullOrEmpty(gameStat.gameinfo.NextPlayerId) && gameStat.gameinfo.NextPlayerId != "none")	{
+				Debug.Log("next turn baton exists");
+				break;
+			}
+
+			yield return new WaitForSeconds(5);
+
+			rc = KogsRPC.kogscreatefirstbaton(gameid, out txData, out errorStr);
+			Debug.Log("kogscreatefirstbaton rc=" + rc + " error=" + errorStr);
+			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
+			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			rc = NSPV.BroadcastTx(signedTx, out txid, out errorStr);
+			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+			if (rc == 0)
+				break;
+			if (rc != 0 && ++count == 3)	{
+				Debug.Log("can't create first baton (maybe nfts not deposited)");
+				yield break;
+			}
+		}
+
+		string expectedNext = null;
+		count = 0;
 		while(true) 
 		{
 			yield return new WaitForSeconds(5);
@@ -1851,7 +1925,7 @@ public class KogsWrapper : MonoBehaviour
 				||
 				!String.IsNullOrEmpty(expectedNext) && expectedNext != gameStat.gameinfo.NextPlayerId)  // next baton is not created
 			{	
-				if (++count > 12)
+				if (++count == 3)
 					break;
 
 				if (String.IsNullOrEmpty(expectedNext))
