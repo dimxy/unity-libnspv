@@ -1801,7 +1801,7 @@ public class KogsWrapper : MonoBehaviour
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
 		string gameid = null;
-		//string gameid = "2ed61e824195f9c8782f940b4f8b98274e8980080e003f6d1925d2dc8ce27fb8";
+		//string gameid = "fe7f3e4f3938ea48b11876b33c0803a364fc1e4f543c9403978d1ef9be165acb";
 
 		// create or get player and container and get slammer
 		if (createOrGetGameObjects(wif1, out player1, out container1, out slammer1) == false && gameid == null) {
@@ -1895,7 +1895,7 @@ public class KogsWrapper : MonoBehaviour
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
 			if (rc == 0)
 				break;
-			if (rc != 0 && ++count == 3)	{
+			if (rc != 0 && ++count == 10)	{
 				Debug.Log("can't create first baton (maybe nfts not deposited)");
 				yield break;
 			}
@@ -1925,7 +1925,7 @@ public class KogsWrapper : MonoBehaviour
 				||
 				!String.IsNullOrEmpty(expectedNext) && expectedNext != gameStat.gameinfo.NextPlayerId)  // next baton is not created
 			{	
-				if (++count == 3)	{
+				if (++count == 10)	{
 					Debug.Log("could not get next baton");
 					break;
 				}
