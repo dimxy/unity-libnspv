@@ -1960,8 +1960,8 @@ public class KogsWrapper : MonoBehaviour
 
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
-		//string gameid = null;
-		string gameid = "577f0b7bd653b900673ea4dd57a4fbde453a093a0fc72116322120640ffbc24e";
+		string gameid = null;
+		//string gameid = "577f0b7bd653b900673ea4dd57a4fbde453a093a0fc72116322120640ffbc24e";
 
 		if (!String.IsNullOrEmpty(gameid))	{
 			KogsBaseInfo baseInfo;
