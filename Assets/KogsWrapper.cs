@@ -1266,7 +1266,14 @@ public class KogsWrapper : MonoBehaviour
 		enterred = true;
 
 		Debug.Log("OnGUI() started");
+		GUI.Label(new Rect(200, 100, 450, 20), "KogsWrapper started");
+
 		StartCoroutine( RunTests() );
+		//RunTests();
+	}
+	
+	void OnDestroy() {
+        Debug.Log("GUI Destroyed, check your tests");
 	}
 
 	IEnumerator RunTests()
@@ -1288,24 +1295,26 @@ public class KogsWrapper : MonoBehaviour
 																				 //string wifStr = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";  // my test key 025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41
 																				 //string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed";  // sys pk
 		// string wifStr = "UpUdyyTPFsXv8s8Wn83Wuc4iRsh5GDUcz8jVFiE3SxzFSfgNEyed"; // sys
+		
 		// string wif1 = "UpUhjzv1x6gQoiRL6GkM4Yb44uYPjxshqigVdNSaUqpwDkoqFsGm";
    		// "address": "RTbiYv9u1mrp7TmJspxduJCe3oarCqv9K4",
    		// "pubkey": "025f97b6c42409e8e69eb2fdab281219aafe15169deec801ee621c63cc1ba0bb8c",
+		
 		// string wif2 = "UvchGG2gYsTgsKA4vCAp4UNHAn6gLgUrRKEbcrjqzAFhbu8fqzUD";
    		// "address": "RLNXzPsfWkRvNbUcargXJchRsWXGSg7U4L",
    		// "pubkey": "025fa5b41da1e4cb9b9af345dddd2a4c35feb5030580e1fa40faaf387957b36f41",
 
 		rc = NSPV.Init(sChainName, out errorStr);
 		Debug.Log("NSPV.Init rc=" + rc + " error=" + errorStr);
-		GUI.Label(new Rect(15, 30, 450, 100), "NSPV.Init rc=" + rc);
+		//GUI.Label(new Rect(200, 130, 450, 20), "NSPV.Init rc=" + rc);
 
 		yield return StartCoroutine( runTestGame() );
-		//yield return StartCoroutine( runDelays() );
-
-		//Debug.Log("after StartCoroutine runDelays");
-		//StartCoroutine( runFinish() );
 		Debug.Log("after runTestGame");
 
+		//yield return StartCoroutine( runDelays() );
+		/////Debug.Log("after StartCoroutine runDelays");
+		/////StartCoroutine( runFinish() );
+		
 		// once cryptoconditions lib hanged on this: 
 		//string txData0 = "{	\"hex\":	\"0400008085202f8902a49ce22e76af21c7d0f7d428cde3e1b07f338d8f9f1e3790b5f955b80b3889b80100000000ffffffffd1e692eec0d01605ff0646d5ae38f6e1519ed4f4917a768b19a27d733400e6a20000000000ffffffff028813000000000000232102e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3ac5e78ef0500000000232102e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3ac00000000d85900000000000000000000000000\",	\"SigData\":	[{	\"vin\":	0,	\"scriptPubKey\":	\"2102e1bb3f95f46fd89a93c8fe39c6e287c8beef659b7277791345b1b1aaa68a19b3ac\",	\"amount\":	99589998}, {\"vin\":	1,	\"cc\":	{\"type\":	\"threshold-sha-256\",	\"threshold\":	2,	\"subfulfillments\":	[{	\"type\":	\"eval-sha-256\",	\"code\":	\"9A\"	}, {\"type\":	\"threshold-sha-256\",	\"threshold\":	1,	\"subfulfillments\":	[{ \"type\":	\"secp256k1-sha-256\", \"publicKey\":	\"03C27DB737B92826D37FB43F3FDA3D1B1D258CD28B68FE4BE605457BF9DD9E0218\"}]	}]},	\"amount\":	5000,	\"globalPrivKey\":	\"9f9a856dd92bfecba118ca510680877f87aaef9c6ea02121ed1c8996c6e69321\"	}]}";
 		//rc = NSPV.FinalizeCCTx(txData0, out signedTx, out errorStr);
@@ -1319,15 +1328,18 @@ public class KogsWrapper : MonoBehaviour
 		//yield break;
 
 		/*
-		rc = NSPV.Login(wif2, out err);
+		string err;
+		rc = NSPV.Login(wif1, out err);
 		Debug.Log("NSPV.Login rc=" + rc + " error=" + err);  
+		//GUI.Label(new Rect(200, 160, 450, 20), "NSPV.Login rc=" + rc);
 		*/
+		
 		/*
 		rc = KogsRPC.kogskoglist(true, out kogids, out err);
 		Debug.Log("KogsRPC.kogskoglist rc=" + rc + " error=" + err + " kogids.Length=" + (kogids != null ? kogids.Length : 0));
-
-		yield break;
+		//GUI.Label(new Rect(200, 190, 450, 20), "KogsRPC.kogskoglist rc=" + rc);
 		*/
+		
 		/*
 		NSPV.Finish();
 		Debug.Log("NSPV.Finish exited");
@@ -1961,7 +1973,9 @@ public class KogsWrapper : MonoBehaviour
 		string player1, container1, slammer1; 
 		string player2, container2, slammer2; 
 		string gameid = null;
-		//string gameid = "577f0b7bd653b900673ea4dd57a4fbde453a093a0fc72116322120640ffbc24e";
+		//string gameid = "a09b667e1b85d61430274118d8214611fb010d00302fcfdf6d28cfaaec196788";
+
+		yield return null;
 
 		if (!String.IsNullOrEmpty(gameid))	{
 			KogsBaseInfo baseInfo;
@@ -1974,16 +1988,22 @@ public class KogsWrapper : MonoBehaviour
 				}
 			}
 		}
+		yield return null;
+
 
 		// create or get player and container and get slammer
 		if (createOrGetGameObjects(wif1, out player1, out container1, out slammer1) == false && gameid == null) {
 			Debug.Log("cant get game objects for wif1");
 			yield break;
 		}
+		yield return null;
+
 		if (createOrGetGameObjects(wif2, out player2, out container2, out slammer2) == false && gameid == null) {
 			Debug.Log("cant get game objects for wif2");
 			yield break;
-		} 
+		}
+		yield return null;
+ 
 
 
 		if (!String.IsNullOrEmpty(gameid))	{
@@ -1992,12 +2012,15 @@ public class KogsWrapper : MonoBehaviour
 				Debug.Log("cant get player for wif1");
 				yield break;
 			}
+			yield return null;
+
 			if (getPlayer(wif2, gameid, out player2) == false) {
 				Debug.Log("cant get player for wif2");
 				yield break;
 			}
 		}
 		Debug.Log("found players=" + player1 + " " + player2);
+		yield return null;
 
 		
 		string []playerids = { player1, player2 };
@@ -2007,53 +2030,80 @@ public class KogsWrapper : MonoBehaviour
 		if (rc != 0)
 			yield break;
 
+		yield return null;
+
 		if (String.IsNullOrEmpty(gameid)) 
 		{
+			Debug.Log("before kogsstartgame");
+
 			rc = KogsRPC.kogsstartgame(gameconfigid, playerids, out txData, out errorStr);
 			Debug.Log("kogsstartgame rc=" + rc + " error=" + errorStr);
+			yield return null;
+
 			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			yield return null;
+
 			rc = NSPV.BroadcastTx(signedTx, out gameid, out errorStr);
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " gameid=" + gameid);
+			yield return null;
+
 			if (rc != 0)	{
 				Debug.Log("can't start a game");
-					yield break;
+				yield break;
 			}
 		}
-
-		yield return new WaitForSeconds(5);
+		Debug.Log("before WaitForSeconds(5) after start game");
+		//yield return new WaitForSeconds(5);
+		yield return null;
 		// deposit container and slammer
 		if (!String.IsNullOrEmpty(container1) && !String.IsNullOrEmpty(slammer1))	{ // if slammer is empty let's consider it is already deposited
+			Debug.Log("before depositTokens wif1");
 			if (depositTokens(wif1, gameid, container1, slammer1) == false) {
 				Debug.Log("can't deposit tokens for wif1");
 				yield break;
 			}
 		}
+		yield return null;
 
 		if (!String.IsNullOrEmpty(container2) && !String.IsNullOrEmpty(slammer2))	{
+			Debug.Log("before depositTokens wif2");
 			if (depositTokens(wif2, gameid, container2, slammer2) == false) {
 				Debug.Log("can't deposit tokens for wif2");
 				yield break;
 			}
 		}
-		yield return new WaitForSeconds(5);
+		yield return null;
+
+		Debug.Log("before WaitForSeconds(5) after deposittokens");
+
+		//yield return new WaitForSeconds(5);
 
 		// check if randoms already in the chain:
 		int r;
+		Debug.Log("before KogsRPC.kogsgetrandom");
+
 		rc = KogsRPC.kogsgetrandom(gameid, 0, out r, out errorStr);
 		Debug.Log("KogsRPC.kogsgetrandom rc=" + rc + " errorStr=" + errorStr + " r=" + r);
+		yield return null;
+
 		if (rc != 0)
 		{
+			Debug.Log("no randoms committed yet, will commit");
+
 			// commit randoms:
 			if (commitRandoms(wif1, gameid, 1) == false) {
 				Debug.Log("can't commit randoms for wif1, maybe committed already");
 				//yield break;  
 			}
-		
+			yield return null;
+
 			if (commitRandoms(wif2, gameid, 2) == false) {
 				Debug.Log("can't commit randoms for wif2, maybe comitted already");
 				//yield break;
 			}
+			yield return null;
+
 			
 			int count1 = 8;
 			bool revealed1 = false;
@@ -2063,7 +2113,8 @@ public class KogsWrapper : MonoBehaviour
 				Debug.Log("waiting for committing randoms");
 				count1 --;
 
-				yield return new WaitForSeconds(5);
+				//yield return new WaitForSeconds(5);
+				yield return null;
 				// reveal randoms:
 				if (!revealed1)
 					revealed1 = revealRandoms(wif1, gameid, 1);
@@ -2073,6 +2124,8 @@ public class KogsWrapper : MonoBehaviour
 					if (count1 == 0)  // end of tries
 						break;
 				}
+				yield return null;
+
 			
 				if (!revealed2)
 					revealed2 = revealRandoms(wif2, gameid, 2);
@@ -2082,6 +2135,7 @@ public class KogsWrapper : MonoBehaviour
 					if (count1 == 0)	
 						break;
 				}
+				yield return null;
 			}
 		}
 
@@ -2090,6 +2144,7 @@ public class KogsWrapper : MonoBehaviour
 		Debug.Log("NSPV.Login for wif1 rc=" + rc + " error=" + errorStr);
 		if (rc != 0)
 			yield break;
+		yield return null;
 		while(true) 
 		{
 			Debug.Log("waiting for depositing nfts to game...");
@@ -2099,20 +2154,29 @@ public class KogsWrapper : MonoBehaviour
 				Debug.Log("can't get game status");
 				yield break;
 			}
+			yield return null;
+
 			KogsGameStatus gameStat = (KogsGameStatus)baseInfo;
 			if (!String.IsNullOrEmpty(gameStat.gameinfo.NextPlayerId) && gameStat.gameinfo.NextPlayerId != "none")	{
 				Debug.Log("next turn baton exists, skipping kogscreatefirstbaton");
 				break;
 			}
-
-			yield return new WaitForSeconds(5);
+		
+			//yield return new WaitForSeconds(5);
+			yield return null;
 
 			rc = KogsRPC.kogscreatefirstbaton(gameid, out txData, out errorStr);
 			Debug.Log("kogscreatefirstbaton rc=" + rc + " error=" + errorStr);
+			yield return null;
+
 			NSPV.FinalizeCCTx(txData, out signedTx, out errorStr);
 			Debug.Log("NSPV.FinalizeCCTx errorStr=" + errorStr);
+			yield return null;
+
 			rc = NSPV.BroadcastTx(signedTx, out txid, out errorStr);
 			Debug.Log("NSPV.BroadcastTx errorStr=" + errorStr + " txid=" + txid);
+			yield return null;
+
 			if (rc == 0)
 				break;
 			if (rc != 0 && ++count == 8)	{
@@ -2129,7 +2193,8 @@ public class KogsWrapper : MonoBehaviour
 		count = 0;
 		while(true) 
 		{
-			yield return new WaitForSeconds(5);
+			//yield return new WaitForSeconds(5);
+			yield return null;
 
 			KogsBaseInfo baseInfo;
 			rc = KogsRPC.kogsobjectinfo(gameid, out baseInfo, out errorStr);
@@ -2137,19 +2202,20 @@ public class KogsWrapper : MonoBehaviour
 				Debug.Log("can't get game status");
 				yield break;
 			}
-
 			KogsGameStatus gameStat = (KogsGameStatus)baseInfo;
 
 			if (gameStat.gameinfo.finished)	{
 				Debug.Log("game ended, winner=" + gameStat.gameinfo.WinnerId);
 				break;
 			}
+			yield return null;
+
 
 			if ((String.IsNullOrEmpty(gameStat.gameinfo.NextPlayerId) || gameStat.gameinfo.NextPlayerId == "none")  // first baton is not created
 				||
 				!String.IsNullOrEmpty(expectedNext) && expectedNext != gameStat.gameinfo.NextPlayerId)  // next baton is not created
 			{	
-				if (++count == 8)	{
+				if (++count == 12)	{   // if count==8 it might fail to get finish baton as it was still in mempool and seems koggamestatus missed it (SpentIndex bug?)
 					Debug.Log("could not get next baton");
 					break;
 				}
@@ -2158,6 +2224,7 @@ public class KogsWrapper : MonoBehaviour
 					Debug.Log("waiting for first baton");
 				else
 					Debug.Log("waiting for next player=" + expectedNext);
+				yield return null;
 				continue;
 			}
 
@@ -2168,6 +2235,8 @@ public class KogsWrapper : MonoBehaviour
 			else {
 				slamok = doSlam(wif2, gameid, player2);
 			}
+			yield return null;
+
 			if (slamok == false)	{
 				Debug.Log("can't do slam");
 				break;
